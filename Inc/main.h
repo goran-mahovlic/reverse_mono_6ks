@@ -58,17 +58,43 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define MOTOR_PIN1_Pin GPIO_PIN_3
+#define MOTOR_PIN1_GPIO_Port GPIOE
+#define MOTOR_PIN2_Pin GPIO_PIN_4
+#define MOTOR_PIN2_GPIO_Port GPIOE
+#define MOTOR_PIN3_Pin GPIO_PIN_5
+#define MOTOR_PIN3_GPIO_Port GPIOE
+#define D1_Pin GPIO_PIN_0
+#define D1_GPIO_Port GPIOF
 #define FLASH_CS_Pin GPIO_PIN_4
 #define FLASH_CS_GPIO_Port GPIOA
-#define TS_IRQ_Pin GPIO_PIN_5
-#define TS_IRQ_GPIO_Port GPIOC
-#define TS_IRQ_EXTI_IRQn EXTI9_5_IRQn
+#define FLASH_SCK_Pin GPIO_PIN_5
+#define FLASH_SCK_GPIO_Port GPIOA
+#define FLASH_MISO_Pin GPIO_PIN_6
+#define FLASH_MISO_GPIO_Port GPIOA
+#define FLASH_MOSI_Pin GPIO_PIN_7
+#define FLASH_MOSI_GPIO_Port GPIOA
+#define UV_LED_Pin GPIO_PIN_0
+#define UV_LED_GPIO_Port GPIOG
 #define TS_CS_Pin GPIO_PIN_12
-#define TS_CS_GPIO_Port GPIOB
-#define RF_CE_Pin GPIO_PIN_6
-#define RF_CE_GPIO_Port GPIOB
-#define RF_CS_Pin GPIO_PIN_7
-#define RF_CS_GPIO_Port GPIOB
+#define TS_CS_GPIO_Port GPIOD
+#define TS_CLK_REAL_Pin GPIO_PIN_13
+#define TS_CLK_REAL_GPIO_Port GPIOD
+#define LCD_RST_Pin GPIO_PIN_2
+#define LCD_RST_GPIO_Port GPIOG
+#define TS_DOUT_REAL_Pin GPIO_PIN_3
+#define TS_DOUT_REAL_GPIO_Port GPIOG
+#define TS_DIN_REAL_Pin GPIO_PIN_4
+#define TS_DIN_REAL_GPIO_Port GPIOG
+#define FMC_ADD_FAKE_Pin GPIO_PIN_5
+#define FMC_ADD_FAKE_GPIO_Port GPIOG
+#define TS_IRQ_Pin GPIO_PIN_6
+#define TS_IRQ_GPIO_Port GPIOG
+#define TS_IRQ_EXTI_IRQn EXTI9_5_IRQn
+#define FMC_ADD_READ_Pin GPIO_PIN_7
+#define FMC_ADD_READ_GPIO_Port GPIOG
+#define LCD_BL_Pin GPIO_PIN_8
+#define LCD_BL_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

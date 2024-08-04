@@ -12,8 +12,8 @@
 #define LCD_DC_PIN								DC_Pin
 
 //RESET PIN AND PORT, STANDARD GPIO
-#define	LCD_RST_PORT							GPIOB
-#define	LCD_RST_PIN								GPIO_PIN_12
+#define	LCD_RST_PORT							GPIOG
+#define	LCD_RST_PIN								GPIO_PIN_2
 
 #define	LCD_BL_PORT							    GPIOG
 #define	LCD_BL_PIN                              GPIO_PIN_8
