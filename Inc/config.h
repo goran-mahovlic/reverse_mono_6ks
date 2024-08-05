@@ -3,6 +3,8 @@
 
 //#include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal.h"
+
+
 //CHIP SELECT PIN AND PORT, STANDARD GPIO
 #define LCD_CS_PORT								GPIOC
 #define LCD_CS_PIN								CS_Pin

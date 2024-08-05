@@ -370,7 +370,7 @@ void ILI9341_FillRect_DMA(uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, ui
 		{
 			cntr = 0;
 			transferComplete = false;
-			HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)&FrameBuf[0] , /*(uint32_t)LCD->LCD_RAM*/( uint32_t ) 0x60080000, len);
+			HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0, (uint32_t)&FrameBuf[0] , /*(uint32_t)LCD->LCD_RAM*/( uint32_t ) 0x60000008, len);
 			
 			while(transferComplete == false)
 			{				

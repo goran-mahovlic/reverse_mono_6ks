@@ -86,13 +86,11 @@ void Error_Handler(void);
 #define TS_DOUT_REAL_GPIO_Port GPIOG
 #define TS_DIN_REAL_Pin GPIO_PIN_4
 #define TS_DIN_REAL_GPIO_Port GPIOG
-#define FMC_ADD_FAKE_Pin GPIO_PIN_5
-#define FMC_ADD_FAKE_GPIO_Port GPIOG
 #define TS_IRQ_Pin GPIO_PIN_6
 #define TS_IRQ_GPIO_Port GPIOG
 #define TS_IRQ_EXTI_IRQn EXTI9_5_IRQn
-#define FMC_ADD_READ_Pin GPIO_PIN_7
-#define FMC_ADD_READ_GPIO_Port GPIOG
+#define FMC_A1_REAL_Pin GPIO_PIN_7
+#define FMC_A1_REAL_GPIO_Port GPIOG
 #define LCD_BL_Pin GPIO_PIN_8
 #define LCD_BL_GPIO_Port GPIOG
 

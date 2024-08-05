@@ -90,14 +90,15 @@
 //#include "spi.h"
 //#include "gpio.h"
 
-#define MONOX
+//#define MONOX
+#define SATURN
 
 /* Global Variables ------------------------------------------------------------------*/
 volatile uint16_t LCD_HEIGHT = ILI9341_SCREEN_HEIGHT;
 volatile uint16_t LCD_WIDTH	 = ILI9341_SCREEN_WIDTH;
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 
-uint16_t * lcdAddr = (uint16_t *) 0x60080000;
+uint16_t * lcdAddr = (uint16_t *) 0x60000008;
 
 /*For LittlevGL*/
 static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p);
@@ -125,6 +126,8 @@ static void DMA_TransferError(DMA_HandleTypeDef *han);
 ******************************************************************************/
 void ILI9341_Write_Command(uint16_t data)
 { 
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
+	//HAL_Delay(1);
 	LCD->LCD_REG=data; 
 }
 
@@ -150,7 +153,11 @@ HAL_Delay(delayms);
 ******************************************************************************/
 void ILI9341_Write_Data(uint16_t data)
 {
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
+	//HAL_Delay(1);
 	LCD->LCD_RAM=data; 
+
+
 }
 
 /* Set Address - Location block - to draw into */
@@ -713,6 +720,7 @@ void ILI9341_SetCursor(uint16_t Xpos, uint16_t Ypos)
 ******************************************************************************/	 
 void ILI9341_WriteData_16Bit(uint16_t Data)
 {
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 	 LCD->LCD_RAM = Data;
 }
 
@@ -771,6 +779,7 @@ ILI9341_Draw_Color_Burst(Color, Height);
 uint16_t ILI9341_Read_Data(void)
 {
 	volatile uint16_t data;  //·АЦ№±»УЕ»Ї
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 	data=LCD->LCD_RAM;
 	return data;
 }

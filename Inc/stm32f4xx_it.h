@@ -57,8 +57,7 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 void EXTI9_5_IRQHandler(void);
-void DMA2_Stream2_IRQHandler(void);
-void DMA2_Stream3_IRQHandler(void);
+void DMA2_Stream0_IRQHandler(void);
 void HASH_RNG_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 

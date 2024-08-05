@@ -46,13 +46,9 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-DMA2D_HandleTypeDef hdma2d;
-
 RNG_HandleTypeDef hrng;
 
 SPI_HandleTypeDef hspi1;
-DMA_HandleTypeDef hdma_spi1_rx;
-DMA_HandleTypeDef hdma_spi1_tx;
 
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
@@ -76,8 +72,8 @@ static void MX_DMA_Init(void);
 static void MX_RNG_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_DMA2D_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -120,8 +116,10 @@ int main(void)
   MX_RNG_Init();
   MX_FMC_Init();
   MX_SPI1_Init();
-  MX_DMA2D_Init();
   MX_USB_OTG_FS_HCD_Init();
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
   lv_init();
@@ -138,7 +136,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
 lcd_random_circles();
+
+
 color = LCD_ReadPoint(10,10);
 HAL_Delay(1000);
 ILI9341_Fill_Screen(RED);
@@ -207,40 +208,14 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief DMA2D Initialization Function
-  * @param None
+  * @brief NVIC Configuration.
   * @retval None
   */
-static void MX_DMA2D_Init(void)
+static void MX_NVIC_Init(void)
 {
-
-  /* USER CODE BEGIN DMA2D_Init 0 */
-
-  /* USER CODE END DMA2D_Init 0 */
-
-  /* USER CODE BEGIN DMA2D_Init 1 */
-
-  /* USER CODE END DMA2D_Init 1 */
-  hdma2d.Instance = DMA2D;
-  hdma2d.Init.Mode = DMA2D_M2M;
-  hdma2d.Init.ColorMode = DMA2D_OUTPUT_RGB565;
-  hdma2d.Init.OutputOffset = 0;
-  hdma2d.LayerCfg[1].InputOffset = 0;
-  hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB565;
-  hdma2d.LayerCfg[1].AlphaMode = DMA2D_NO_MODIF_ALPHA;
-  hdma2d.LayerCfg[1].InputAlpha = 0;
-  if (HAL_DMA2D_Init(&hdma2d) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_DMA2D_ConfigLayer(&hdma2d, 1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN DMA2D_Init 2 */
-
-  /* USER CODE END DMA2D_Init 2 */
-
+  /* DMA2_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
 }
 
 /**
@@ -355,8 +330,8 @@ static void MX_DMA_Init(void)
   hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
   hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_ENABLE;
   hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
-  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
+  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
+  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
   hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
   hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_HIGH;
   hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
@@ -367,14 +342,6 @@ static void MX_DMA_Init(void)
   {
     Error_Handler( );
   }
-
-  /* DMA interrupt init */
-  /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-  /* DMA2_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream3_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream3_IRQn);
 
 }
 
@@ -413,10 +380,10 @@ static void MX_FMC_Init(void)
   hsram1.Init.ContinuousClock = FMC_CONTINUOUS_CLOCK_SYNC_ONLY;
   hsram1.Init.PageSize = FMC_PAGE_SIZE_NONE;
   /* Timing */
-  Timing.AddressSetupTime = 8;
+  Timing.AddressSetupTime = 6;
   Timing.AddressHoldTime = 15;
-  Timing.DataSetupTime = 15;
-  Timing.BusTurnAroundDuration = 1;
+  Timing.DataSetupTime = 6;
+  Timing.BusTurnAroundDuration = 0;
   Timing.CLKDivision = 16;
   Timing.DataLatency = 17;
   Timing.AccessMode = FMC_ACCESS_MODE_A;
@@ -459,11 +426,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|FMC_ADD_READ_Pin
-                          |LCD_BL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_REAL_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pins : MOTOR_PIN1_Pin MOTOR_PIN2_Pin MOTOR_PIN3_Pin */
   GPIO_InitStruct.Pin = MOTOR_PIN1_Pin|MOTOR_PIN2_Pin|MOTOR_PIN3_Pin;
@@ -479,10 +448,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(D1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_REAL_Pin FMC_ADD_READ_Pin
-                           LCD_BL_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|FMC_ADD_READ_Pin
-                          |LCD_BL_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_REAL_Pin LCD_BL_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -506,6 +473,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(TS_IRQ_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : FMC_A1_REAL_Pin */
+  GPIO_InitStruct.Pin = FMC_A1_REAL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(FMC_A1_REAL_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
