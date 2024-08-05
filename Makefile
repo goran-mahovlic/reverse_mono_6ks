@@ -158,7 +158,7 @@ Src/system_stm32f4xx.c \
 Src/sysmem.c \
 Src/syscalls.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c \
-#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
+Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
 
 # ASM sources
 ASM_SOURCES =  \

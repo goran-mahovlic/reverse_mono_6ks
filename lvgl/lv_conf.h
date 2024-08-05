@@ -174,8 +174,8 @@ typedef void * lv_group_user_data_t;
 #endif  /*LV_USE_GROUP*/
 
 /* 1: Enable GPU interface*/
-#define LV_USE_GPU              1
-#define LV_USE_GPU_STM32_DMA2D 0
+#define LV_USE_GPU              0
+#define LV_USE_GPU_STM32_DMA2D 1
 //#define LV_GPU_DMA2D_CMSIS_INCLUDE "stm32f769xx.h"
 #define LV_GPU_DMA2D_CMSIS_INCLUDE "stm32f427xx.h"
 
