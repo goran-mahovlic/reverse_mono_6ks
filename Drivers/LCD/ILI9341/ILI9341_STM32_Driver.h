@@ -88,8 +88,8 @@
 #include "stm32f4xx_hal.h"
 
 
-#define ILI9341_SCREEN_HEIGHT 240 
-#define ILI9341_SCREEN_WIDTH 	320
+#define ILI9341_SCREEN_HEIGHT 320
+#define ILI9341_SCREEN_WIDTH 	480
 
 //new cmd
 #define LCD_CMD_ADDRESS (( uint32_t ) 0x60000000 )

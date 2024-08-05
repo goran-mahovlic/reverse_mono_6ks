@@ -126,8 +126,6 @@ int main(void)
   ILI9341_Init();
   lv_touchpad_init();
   HAL_Delay(100);
-  color = LCD_ReadPoint(10,10);
-
   lv_demo_benchmark();
   //lv_demo_widgets();
   /* USER CODE END 2 */
@@ -138,22 +136,12 @@ int main(void)
   {
 
 lcd_random_circles();
-
-
-color = LCD_ReadPoint(10,10);
-HAL_Delay(1000);
-ILI9341_Fill_Screen(RED);
-color = LCD_ReadPoint(10,10);
-HAL_Delay(1000);
-ILI9341_Fill_Screen(GREEN);
-color = LCD_ReadPoint(10,10);
-HAL_Delay(1000);
 //lcd_random_points();
-//lcd_fill_rand_colors();
+lcd_fill_rand_colors();
 //lcd_random_rectangles();
 //ILI9341_Draw_Filled_Circle(last_x - 2, 240 - last_y - 2, 4, RED);
 //lv_task_handler();
-//HAL_Delay(100);
+HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

@@ -209,23 +209,23 @@ switch(screen_rotation)
 	{
 		case SCREEN_VERTICAL_1:
 			ILI9341_Write_Data(0x40|0x08);
-			LCD_WIDTH = 240;
-			LCD_HEIGHT = 320;
+			LCD_WIDTH = 320;
+			LCD_HEIGHT = 480;
 			break;
 		case SCREEN_HORIZONTAL_1:
 			ILI9341_Write_Data(0x20|0x08);
-			LCD_WIDTH  = 320;
-			LCD_HEIGHT = 240;
+			LCD_WIDTH  = 480;
+			LCD_HEIGHT = 320;
 			break;
 		case SCREEN_VERTICAL_2:
 			ILI9341_Write_Data(0x80|0x08);
-			LCD_WIDTH  = 240;
-			LCD_HEIGHT = 320;
+			LCD_WIDTH  = 320;
+			LCD_HEIGHT = 480;
 			break;
 		case SCREEN_HORIZONTAL_2:
 			ILI9341_Write_Data(0x40|0x80|0x20|0x08);
-			LCD_WIDTH  = 320;
-			LCD_HEIGHT = 240;
+			LCD_WIDTH  = 480;
+			LCD_HEIGHT = 320;
 			break;
 		default:
 			//EXIT IF SCREEN ROTATION NOT VALID!
