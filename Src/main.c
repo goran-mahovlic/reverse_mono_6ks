@@ -132,20 +132,37 @@ int main(void)
   HAL_Delay(100);
   lv_demo_benchmark();
   //lv_demo_widgets();
+
+  for (int i= 0; i<10;i++){
+  lcd_fill_rand_colors();
+  HAL_Delay(300);
+  }
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
+ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
+ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
+HAL_Delay(2000);
+lcd_random_points();
+ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
+ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
+ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
+lcd_random_points();
 lcd_random_circles();
-//lcd_random_points();
-lcd_fill_rand_colors();
-//lcd_random_rectangles();
+lcd_random_points();
+lcd_random_rectangles();
+lcd_random_points();
+lcd_random_lines();
+
+
 //ILI9341_Draw_Filled_Circle(last_x - 2, 240 - last_y - 2, 4, RED);
 //lv_task_handler();
-HAL_Delay(1000);
+//HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

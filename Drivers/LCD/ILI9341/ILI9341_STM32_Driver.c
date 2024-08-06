@@ -619,7 +619,7 @@ ILI9341_Write_Data(Color);
 void ILI9341_Draw_Color_Burst(uint16_t Color, uint32_t Size)
 {
 
-
+HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
   for(uint32_t i = 0; i < Size /*(x2-x1+1)*(y2-y1+1)*/; i++)
   {
       LCD->LCD_RAM = Color;
@@ -672,8 +672,9 @@ HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_SET);
 /*Sets address (entire screen) and Sends Height*Width ammount of Color information to LCD*/
 void ILI9341_Fill_Screen(uint16_t Color) //void LCD_Fill(lv_color_t * page_buff)
 {	
-
+HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
 ILI9341_Set_Address(0,0, LCD_WIDTH - 1, LCD_HEIGHT - 1 );
+HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
   unsigned int i; 
 	uint32_t total_point=LCD_HEIGHT*LCD_WIDTH;
 	for(i=0;i<total_point;i++)

@@ -187,7 +187,7 @@ uint8_t TP_Read_Coordinates(uint16_t Coordinates[2])
 		//CONVERTING 16bit Value to Screen coordinates
     // 65535/273 = 240!
 		// 65535/204 = 320!
-    Coordinates[0] = ((240 - (rawx/X_TRANSLATION)) - X_OFFSET)*X_MAGNITUDE;
+    Coordinates[0] = ((320 - (rawx/X_TRANSLATION)) - X_OFFSET)*X_MAGNITUDE;
 		Coordinates[1] = ((rawy/Y_TRANSLATION)- Y_OFFSET)*Y_MAGNITUDE;
 		
 		return TOUCHPAD_DATA_OK;			

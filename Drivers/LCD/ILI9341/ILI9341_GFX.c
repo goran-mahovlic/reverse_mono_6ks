@@ -110,15 +110,15 @@ void lcd_random_rectangles(void)
 			  
      //lcdDelay(1);
     }
-    lcdDelay(500);
-    ILI9341_Fill_Screen(BLACK);
+    //lcdDelay(500);
+    //ILI9341_Fill_Screen(BLACK);
 }
 
 void lcd_random_circles(void)
 {
     uint32_t x;
     uint32_t y;
-	ILI9341_Fill_Screen(BLACK);
+	//ILI9341_Fill_Screen(BLACK);
     for(int i=0;i<2000;i++)
     {
         HAL_RNG_GenerateRandomNumber(&hrng, &x);
@@ -126,13 +126,13 @@ void lcd_random_circles(void)
       ILI9341_Draw_Hollow_Circle(x%(LCD_WIDTH-20)+20, y%(LCD_HEIGHT-20)+20,  20,ILI9341_RandColor());
       lcdDelay(1);
     }
-    lcdDelay(500);
-    ILI9341_Fill_Screen(BLACK);
+    //lcdDelay(500);
+    //ILI9341_Fill_Screen(BLACK);
 }
 void lcd_fill_rand_colors(void)
 {	
 	ILI9341_Fill_Screen(ILI9341_RandColor());
-	lcdDelay(500);
+	//lcdDelay(500);
 }
 void lcd_random_lines(void)
 {
@@ -147,8 +147,8 @@ void lcd_random_lines(void)
                                             Rnd(&hrng)%LCD_HEIGHT, ILI9341_RandColor());
     //  lcdDelay(10);
     }
-    lcdDelay(500);
-    ILI9341_Fill_Screen(BLACK);  
+    //lcdDelay(500);
+    //ILI9341_Fill_Screen(BLACK);  
 }
 
 void lcd_random_points(void)
