@@ -23,6 +23,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include <sys/time.h>
+#include <time.h>
 #include "../lvgl/lvgl.h"
 #include "../lvgl/demos/benchmark/lv_demo_benchmark.h"
 #include "touchpad.h"
@@ -79,7 +81,11 @@ static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
 /* USER CODE BEGIN PFP */
-
+int _gettimeofday( struct timeval *tv, void *tzvp )
+{
+    // you can add code here there many example in google search.
+    return 0;  // return non-zero for error
+} // end _gettimeofday()
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

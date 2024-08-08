@@ -604,10 +604,10 @@ vpath %.c $(sort $(dir $(C_SOURCES)))
 # Update the vpath for C++ files
 vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
 # list of ASM program objects
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
-vpath %.s $(sort $(dir $(ASM_SOURCES)))
-OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASMM_SOURCES:.S=.o)))
-vpath %.S $(sort $(dir $(ASMM_SOURCES)))
+#OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
+#vpath %.s $(sort $(dir $(ASM_SOURCES)))
+#OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASMM_SOURCES:.S=.o)))
+#vpath %.S $(sort $(dir $(ASMM_SOURCES)))
 
 # Rule for building C++ files
 $(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)

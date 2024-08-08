@@ -2264,7 +2264,7 @@ bool assignValue(Value &dstValue, const Value &srcValue, uint32_t dstValueType) 
     if (dstValueType == VALUE_TYPE_BOOLEAN) {
         dstValue = Value(srcValue.toBool(), VALUE_TYPE_BOOLEAN);
     } else if (Value::isInt32OrLess(dstValueType)) {
-        dstValue = Value(srcValue.toInt32(), (ValueType)dstValueType);
+       // dstValue = Value(srcValue.toInt32(), (ValueType)dstValueType);
     } else if (dstValueType == VALUE_TYPE_FLOAT) {
         dstValue = Value(srcValue.toFloat(), VALUE_TYPE_FLOAT);
     } else if (dstValueType == VALUE_TYPE_DOUBLE) {
@@ -2658,9 +2658,9 @@ Value Value::toString(uint32_t id) const {
     } else if (type == VALUE_TYPE_UINT32) {
         snprintf(tempStr, sizeof(tempStr), "%" PRIu32 "", uint32Value);
     } else if (type == VALUE_TYPE_INT64) {
-        snprintf(tempStr, sizeof(tempStr), "%" PRId64 "", int64Value);
+        //snprintf(tempStr, sizeof(tempStr), "%" PRId64 "", int64Value);
     } else if (type == VALUE_TYPE_UINT64) {
-        snprintf(tempStr, sizeof(tempStr), "%" PRIu64 "", uint64Value);
+        //snprintf(tempStr, sizeof(tempStr), "%" PRIu64 "", uint64Value);
     } else {
         toText(tempStr, sizeof(tempStr));
     }
@@ -3546,10 +3546,10 @@ void writeValue(const Value &value) {
 		snprintf(tempStr, sizeof(tempStr) - 1, "%" PRIu32 "", value.uint32Value);
 		break;
 	case VALUE_TYPE_INT64:
-		snprintf(tempStr, sizeof(tempStr) - 1, "%" PRId64 "", value.int64Value);
+		//snprintf(tempStr, sizeof(tempStr) - 1, "%" PRId64 "", value.int64Value);
 		break;
 	case VALUE_TYPE_UINT64:
-		snprintf(tempStr, sizeof(tempStr) - 1, "%" PRIu64 "", value.uint64Value);
+		//snprintf(tempStr, sizeof(tempStr) - 1, "%" PRIu64 "", value.uint64Value);
 		break;
 	case VALUE_TYPE_DOUBLE:
         writeHex(tempStr, (uint8_t *)&value.doubleValue, sizeof(double));
@@ -3581,7 +3581,7 @@ void writeValue(const Value &value) {
 		writeHex(tempStr + 1, (uint8_t *)&value.doubleValue, sizeof(double));
 		break;
     case VALUE_TYPE_POINTER:
-        snprintf(tempStr, sizeof(tempStr) - 1, "%" PRIu64 "", (uint64_t)value.getVoidPointer());
+        //snprintf(tempStr, sizeof(tempStr) - 1, "%" PRIu64 "", (uint64_t)value.getVoidPointer());
 		break;
 	default:
 		tempStr[0] = 0;
