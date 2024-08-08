@@ -33,14 +33,19 @@ BUILD_DIR = build
 LVGL_DIR ?= .
 LVGL_DIR_NAME ?= lvgl
 
+CPP_SOURCES = \
+src/ui/eez-flow.cpp
 
-include lvgl/lvgl.mk
 ######################################
 # source
 ######################################
 # C sources
 C_SOURCES = \
 Src/main.c \
+src/ui/screens.c \
+src/ui/images.c \
+src/ui/styles.c \
+src/ui/ui.c \
 Drivers/LCD/ILI9341/ILI9341_GFX.c \
 Drivers/LCD/ILI9341/ILI9341_STM32_Driver.c \
 Drivers/TS/Src/XPT2046_lv.c \
@@ -469,7 +474,7 @@ Src/sysmem.c \
 Src/syscalls.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c
 #Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
-#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
+
 # ASM sources
 ASM_SOURCES = \
 startup_stm32f427xx.s
@@ -516,8 +521,11 @@ AS_DEFS =
 # C defines
 C_DEFS = \
 -DUSE_HAL_DRIVER \
--DSTM32F427xx
+-DSTM32F427xx \
+-DLV_LVGL_H_INCLUDE_SIMPLE
 
+CPP_DEFS = \
+-DLV_LVGL_H_INCLUDE_SIMPLE
 
 # AS includes
 AS_INCLUDES = 
@@ -526,6 +534,7 @@ AS_INCLUDES =
 C_INCLUDES = \
 -IInc \
 -Ilvgl \
+-Isrc/ui \
 -IDrivers/TS/Inc \
 -IDrivers/LCD/ILI9341 \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
@@ -533,6 +542,8 @@ C_INCLUDES = \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
 -IDrivers/CMSIS/Include
 
+CPP_INCLUDES = \
+-Isrc/ui \
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
