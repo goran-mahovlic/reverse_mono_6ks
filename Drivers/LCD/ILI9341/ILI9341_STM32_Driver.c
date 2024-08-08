@@ -89,10 +89,12 @@
 
 //#define MONOX
 #define SATURN
+#define USE_DMA
 
 /* Global Variables ------------------------------------------------------------------*/
 volatile uint16_t LCD_HEIGHT = ILI9341_SCREEN_HEIGHT;
 volatile uint16_t LCD_WIDTH	 = ILI9341_SCREEN_WIDTH;
+/* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 
 uint16_t * lcdAddr = (uint16_t *) 0x60000004;
@@ -113,6 +115,168 @@ static volatile uint32_t t_last = 0;
 
 static void DMA_TransferComplete(DMA_HandleTypeDef *han);
 static void DMA_TransferError(DMA_HandleTypeDef *han);
+void DMA2_Stream0_IRQHandler(void);
+
+void LV_tft_init(void)
+{
+	static lv_color_t buf[ILI9341_SCREEN_WIDTH * FB_SIZE];
+	
+	static lv_disp_draw_buf_t disp_buf;
+	
+	lv_disp_draw_buf_init(&disp_buf, buf, NULL, ILI9341_SCREEN_WIDTH * FB_SIZE);
+
+    /*-----------------------------------
+     * Register the display in LVGL
+     *----------------------------------*/
+
+    static lv_disp_drv_t disp_drv;                  /*Descriptor of a display driver*/
+    lv_disp_drv_init(&disp_drv);                    /*Basic initialization*/
+
+    /*Set up the functions to access to your display*/
+
+    /*Used to copy the buffer's content to the display*/
+    /*Set a display buffer*/
+    disp_drv.draw_buf = &disp_buf;	
+	disp_drv.flush_cb = tft_flush_cb;
+	disp_drv.monitor_cb = monitor_cb;
+	disp_drv.hor_res = ILI9341_SCREEN_WIDTH;
+	disp_drv.ver_res = ILI9341_SCREEN_HEIGHT;
+
+
+#if LV_USE_GPU
+    /*Fill a memory array with a color*/
+    disp_drv.gpu_fill_cb = gpu_fill;
+#endif
+
+    /*Finally register the driver*/
+    lv_disp_drv_register(&disp_drv);
+}
+
+/**
+ * Monitor refresh time
+ * */
+void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
+{
+    t_last = t;
+	uint32_t tmp = t;
+    //lv_obj_invalidate(lv_scr_act());   /*Continuously refresh the whole screen*/
+}
+
+/**
+  * @brief This function handles DMA2 stream0 global interrupt.
+  */
+void DMA2_Stream0_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 0 */
+  HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
+  HAL_DMA_IRQHandler(&hdma_memtomem_dma2_stream0);
+  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
+
+  /* USER CODE END DMA2_Stream0_IRQn 1 */
+}
+
+static void DMA_TransferComplete(DMA_HandleTypeDef *han)
+{
+	y_flush_act ++;
+	if(y_flush_act > y2_flush) {	
+			lv_disp_flush_ready(&disp_drv);
+
+	} else {
+	  buf_to_flush += x2_flush - x1_flush + 1;
+
+	/*##-7- Start the DMA transfer using the interrupt mode ####################*/
+	/* Configure the source, destination and buffer size DMA fields and Start DMA Stream transfer */
+	/* Enable All the DMA interrupts */
+	HAL_StatusTypeDef err;
+
+	ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act+1);
+
+	err = HAL_DMA_Start_IT(han,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));
+
+	if( err != HAL_OK)
+	  {
+	    while(1);
+	  }
+
+	}
+}
+static void DMA_TransferError(DMA_HandleTypeDef *han)
+{
+    while(1);
+}
+
+#ifdef USE_DMA
+static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
+{
+	int32_t act_x1 = area->x1 < 0 ? 0 : area->x1;
+	int32_t act_y1 = area->y1 < 0 ? 0 : area->y1;
+	int32_t act_x2 = area->x2 > ILI9341_SCREEN_WIDTH - 1 ? ILI9341_SCREEN_WIDTH - 1 : area->x2;
+	int32_t act_y2 = area->y2 > ILI9341_SCREEN_HEIGHT - 1 ? ILI9341_SCREEN_HEIGHT - 1 : area->y2;
+	
+	x1_flush = act_x1;
+	y1_flush = act_y1;
+	x2_flush = act_x2;
+	y2_flush = act_y2;
+	y_flush_act = act_y1;
+	buf_to_flush = color_p;
+
+	/*Use DMA instead of DMA2D to leave it free for GPU*/
+	HAL_StatusTypeDef err;
+	//HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
+    ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act + 1);
+
+	err = HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));	
+	
+	if(err != HAL_OK)
+	{
+		while(1);	
+	}
+
+}
+
+
+#else
+
+volatile bool disp_flush_enabled = true;
+
+/* Enable updating the screen (the flushing process) when disp_flush() is called by LVGL
+ */
+void disp_enable_update(void)
+{
+    disp_flush_enabled = true;
+}
+
+/* Disable updating the screen (the flushing process) when disp_flush() is called by LVGL
+ */
+void disp_disable_update(void)
+{
+    disp_flush_enabled = false;
+}
+
+static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
+{
+        /*The most simple case (but also the slowest) to put all pixels to the screen one-by-one*/
+		uint16_t x, y;
+		uint16_t temp2 = 0;
+		lv_color_t temp;
+		temp = *color_p;
+		for(y = area->y1; y <= area->y2; y++)
+		{
+			for(x = area->x1; x <= area->x2; x++)
+			{
+			temp = *color_p;
+			temp2 = temp.full;
+			ILI9341_Draw_Pixel(x, y, temp2);
+			color_p++;
+			}
+		}
+
+		lv_disp_flush_ready(&disp_drv);
+
+}
+#endif
 
 /*****************************************************************************
  * @name       :void ILI9341_Write_Command(uint16_t data)
@@ -468,170 +632,6 @@ ILI9341_Fill_Screen(BLACK);
 LV_tft_init();
 //ILI9341_Set_Address(0, 0, 240, 320);
 }
-
-void LV_tft_init(void)
-{
-
-	//_FB static lv_color_t buf[ILI9341_SCREEN_WIDTH * FB_SIZE];
-	static lv_color_t buf[ILI9341_SCREEN_WIDTH * FB_SIZE];
-	
-	static lv_disp_draw_buf_t disp_buf;
-	
-	lv_disp_draw_buf_init(&disp_buf, buf, NULL, ILI9341_SCREEN_WIDTH * FB_SIZE);
-
-    /*-----------------------------------
-     * Register the display in LVGL
-     *----------------------------------*/
-
-    static lv_disp_drv_t disp_drv;                         /*Descriptor of a display driver*/
-    lv_disp_drv_init(&disp_drv);                    /*Basic initialization*/
-
-    /*Set up the functions to access to your display*/
-
-    /*Set the resolution of the display*/
-    disp_drv.hor_res = 480;
-    disp_drv.ver_res = 320;
-
-    /*Used to copy the buffer's content to the display*/
-    disp_drv.flush_cb = tft_flush_cb;
-
-    /*Set a display buffer*/
-    disp_drv.draw_buf = &disp_buf;
-
-#if LV_USE_GPU
-    /*Fill a memory array with a color*/
-    disp_drv.gpu_fill_cb = gpu_fill;
-#endif
-
-    /*Finally register the driver*/
-    lv_disp_drv_register(&disp_drv);
-}
-
-/**
- * Monitor refresh time
- * */
-void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
-{
-    t_last = t;
-    lv_obj_invalidate(lv_scr_act());   /*Continuously refresh the whole screen*/
-}
-
-
-
-#ifdef USE_DMA
-static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
-{
-	int32_t act_x1 = area->x1 < 0 ? 0 : area->x1;
-	int32_t act_y1 = area->y1 < 0 ? 0 : area->y1;
-	int32_t act_x2 = area->x2 > ILI9341_SCREEN_WIDTH - 1 ? ILI9341_SCREEN_WIDTH - 1 : area->x2;
-	int32_t act_y2 = area->y2 > ILI9341_SCREEN_HEIGHT - 1 ? ILI9341_SCREEN_HEIGHT - 1 : area->y2;
-	
-	x1_flush = act_x1;
-	y1_flush = act_y1;
-	x2_flush = act_x2;
-	y2_flush = act_y2;
-	y_flush_act = act_y1;
-	buf_to_flush = color_p;
-
-	/*Use DMA instead of DMA2D to leave it free for GPU*/
-	HAL_StatusTypeDef err;
-	//HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
-    ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act + 1);
-
-	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
-
-	err = HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));	
-	
-	if(err != HAL_OK)
-	{
-		while(1);	
-	}
-
-}
-
-
-#else
-
-volatile bool disp_flush_enabled = true;
-
-/* Enable updating the screen (the flushing process) when disp_flush() is called by LVGL
- */
-void disp_enable_update(void)
-{
-    disp_flush_enabled = true;
-}
-
-/* Disable updating the screen (the flushing process) when disp_flush() is called by LVGL
- */
-void disp_disable_update(void)
-{
-    disp_flush_enabled = false;
-}
-
-static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t * color_p)
-{
-        /*The most simple case (but also the slowest) to put all pixels to the screen one-by-one*/
-    if(disp_flush_enabled) {
-        int32_t x;
-        int32_t y;
-        for(y = area->y1; y <= area->y2; y++) {
-            for(x = area->x1; x <= area->x2; x++) {
-                /*Put a pixel to the display. For example:*/
-                /*put_px(x, y, *color_p)*/
-				ILI9341_Draw_Pixel(x, y, color_p->full);
-                //ILI9341_Draw_Pixel(x, y, color_p->full);
-                color_p++;
-            }
-        }
-    }
-
-    /*IMPORTANT!!!
-     *Inform the graphics library that you are ready with the flushing*/
-    lv_disp_flush_ready(drv);
-
-}
-#endif
-
-static void DMA_TransferComplete(DMA_HandleTypeDef *han)
-{
-	y_flush_act ++;
-	if(y_flush_act > y2_flush) {
-/*
-		if(lv_disp_flush_is_last(&disp_drv)) 
-		    refr_qry = true;
-		else
-*/		
-			lv_disp_flush_ready(&disp_drv);
-
-	} else {
-	  buf_to_flush += x2_flush - x1_flush + 1;
-
-    
-	  /*##-7- Start the DMA transfer using the interrupt mode ####################*/
-	  /* Configure the source, destination and buffer size DMA fields and Start DMA Stream transfer */
-	  /* Enable All the DMA interrupts */
-	HAL_StatusTypeDef err;
-
-	//HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
-
-	ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act+1);
-
-	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
-
-	err = HAL_DMA_Start_IT(han,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));
-
-	if( err != HAL_OK)
-	  {
-	    while(1);
-	  }
-
-	}
-}
-static void DMA_TransferError(DMA_HandleTypeDef *han)
-{
-    while(1);
-}
-
 
 //INTERNAL FUNCTION OF LIBRARY, USAGE NOT RECOMENDED, USE Draw_Pixel INSTEAD
 /*Sends single pixel Color information to LCD*/
