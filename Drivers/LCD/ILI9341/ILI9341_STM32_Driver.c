@@ -129,7 +129,7 @@ void LV_tft_init(void)
      * Register the display in LVGL
      *----------------------------------*/
 
-    static lv_disp_drv_t disp_drv;                  /*Descriptor of a display driver*/
+    //static lv_disp_drv_t disp_drv;                  /*Descriptor of a display driver*/
     lv_disp_drv_init(&disp_drv);                    /*Basic initialization*/
 
     /*Set up the functions to access to your display*/
@@ -162,21 +162,6 @@ void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
     //lv_obj_invalidate(lv_scr_act());   /*Continuously refresh the whole screen*/
 }
 
-/**
-  * @brief This function handles DMA2 stream0 global interrupt.
-  */
-void DMA2_Stream0_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 0 */
-  HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
-  HAL_DMA_IRQHandler(&hdma_memtomem_dma2_stream0);
-  /* USER CODE BEGIN DMA2_Stream0_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream0_IRQn 1 */
-}
-
 static void DMA_TransferComplete(DMA_HandleTypeDef *han)
 {
 	y_flush_act ++;
@@ -192,7 +177,7 @@ static void DMA_TransferComplete(DMA_HandleTypeDef *han)
 	HAL_StatusTypeDef err;
 
 	ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act+1);
-
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 	err = HAL_DMA_Start_IT(han,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));
 
 	if( err != HAL_OK)
@@ -226,7 +211,7 @@ static void tft_flush_cb(lv_disp_drv_t * drv, const lv_area_t * area, lv_color_t
 	HAL_StatusTypeDef err;
 	//HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_RESET);
     ILI9341_Set_Address(x1_flush, y_flush_act, x2_flush, y_flush_act + 1);
-
+	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 	err = HAL_DMA_Start_IT(&hdma_memtomem_dma2_stream0,(uint32_t)buf_to_flush, (uint32_t)lcdAddr, (x2_flush - x1_flush + 1));	
 	
 	if(err != HAL_OK)
