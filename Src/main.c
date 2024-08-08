@@ -22,14 +22,14 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "ILI9341_STM32_Driver.h"
-#include "ILI9341_GFX.h"
 #include <stdbool.h>
 #include "../lvgl/lvgl.h"
 #include "../lvgl/demos/benchmark/lv_demo_benchmark.h"
 #include "touchpad.h"
 #include "XPT2046_lv.h"
 #include "../src/ui/ui.h"
+#include "ILI9341_STM32_Driver.h"
+#include "ILI9341_GFX.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/

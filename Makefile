@@ -33,9 +33,6 @@ BUILD_DIR = build
 LVGL_DIR ?= .
 LVGL_DIR_NAME ?= lvgl
 
-CPP_SOURCES = \
-src/ui/eez-flow.cpp
-
 ######################################
 # source
 ######################################
@@ -46,10 +43,6 @@ src/ui/screens.c \
 src/ui/images.c \
 src/ui/styles.c \
 src/ui/ui.c \
-Drivers/LCD/ILI9341/ILI9341_GFX.c \
-Drivers/LCD/ILI9341/ILI9341_STM32_Driver.c \
-Drivers/TS/Src/XPT2046_lv.c \
-Drivers/TS/Src/touchpad.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_2.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_1.c \
 lvgl/examples/libs/qrcode/lv_example_qrcode_1.c \
@@ -447,6 +440,10 @@ lvgl/demos/widgets/lv_demo_widgets.c \
 lvgl/demos/widgets/assets/img_lvgl_logo.c \
 lvgl/demos/widgets/assets/img_demo_widgets_avatar.c \
 lvgl/demos/widgets/assets/img_clothes.c \
+Drivers/LCD/ILI9341/ILI9341_GFX.c \
+Drivers/LCD/ILI9341/ILI9341_STM32_Driver.c \
+Drivers/TS/Src/XPT2046_lv.c \
+Drivers/TS/Src/touchpad.c \
 Src/stm32f4xx_it.c \
 Src/stm32f4xx_hal_msp.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_usb.c \
@@ -475,9 +472,15 @@ Src/syscalls.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c
 #Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
 
+include lvgl/lvgl.mk
+
 # ASM sources
 ASM_SOURCES = \
 startup_stm32f427xx.s
+
+# C++ source files
+CPP_SOURCES = \
+    src/ui/eez-flow.cpp
 
 #######################################
 # binaries
@@ -489,8 +492,10 @@ ifdef GCC_PATH
 CC = $(GCC_PATH)/$(PREFIX)gcc
 AS = $(GCC_PATH)/$(PREFIX)gcc -x assembler-with-cpp
 CP = $(GCC_PATH)/$(PREFIX)objcopy
+CXX = $(GCC_PATH)/$(PREFIX)g++
 SZ = $(GCC_PATH)/$(PREFIX)size
 else
+CXX = $(PREFIX)c++
 CC = $(PREFIX)gcc
 AS = $(PREFIX)gcc -x assembler-with-cpp
 CP = $(PREFIX)objcopy
@@ -498,7 +503,7 @@ SZ = $(PREFIX)size
 endif
 HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
- 
+
 #######################################
 # CFLAGS
 #######################################
@@ -543,12 +548,16 @@ C_INCLUDES = \
 -IDrivers/CMSIS/Include
 
 CPP_INCLUDES = \
+-IInc \
+-Ilvgl \
 -Isrc/ui \
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
 
 CFLAGS += $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections
+
+CPPFLAGS += $(MCU) $(CPP_DEFS) $(CPP_INCLUDES) $(OPT) -std=c++20 -Wall -fdata-sections -ffunction-sections
 
 ifeq ($(DEBUG), 1)
 CFLAGS += -g -gdwarf-2
@@ -558,6 +567,8 @@ endif
 # Generate dependency information
 CFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
+# Generate dependency information
+CPPFLAGS += -MMD -MP -MF"$(@:%.o=%.d)"
 
 #######################################
 # LDFLAGS
@@ -577,15 +588,27 @@ all: $(BUILD_DIR)/$(TARGET).elf $(BUILD_DIR)/$(TARGET).hex $(BUILD_DIR)/$(TARGET
 #######################################
 # build the application
 #######################################
+
+
+#######################################
 # list of objects
-OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))
+# Update the list of objects
+OBJECTS = $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o))) \
+          $(addprefix $(BUILD_DIR)/,$(notdir $(CPP_SOURCES:.cpp=.o))) \
+          $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o))) \
+          $(addprefix $(BUILD_DIR)/,$(notdir $(ASMM_SOURCES:.S=.o)))
 vpath %.c $(sort $(dir $(C_SOURCES)))
+# Update the vpath for C++ files
+vpath %.cpp $(sort $(dir $(CPP_SOURCES)))
 # list of ASM program objects
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASM_SOURCES:.s=.o)))
 vpath %.s $(sort $(dir $(ASM_SOURCES)))
 OBJECTS += $(addprefix $(BUILD_DIR)/,$(notdir $(ASMM_SOURCES:.S=.o)))
 vpath %.S $(sort $(dir $(ASMM_SOURCES)))
 
+# Rule for building C++ files
+$(BUILD_DIR)/%.o: %.cpp Makefile | $(BUILD_DIR)
+	$(CXX) -c $(CPPFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 $(BUILD_DIR)/%.o: %.c Makefile | $(BUILD_DIR) 
 	$(CC) -c $(CFLAGS) -Wa,-a,-ad,-alms=$(BUILD_DIR)/$(notdir $(<:.c=.lst)) $< -o $@
 
