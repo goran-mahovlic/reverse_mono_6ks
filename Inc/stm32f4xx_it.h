@@ -59,7 +59,6 @@ void SysTick_Handler(void);
 void EXTI9_5_IRQHandler(void);
 void DMA2_Stream0_IRQHandler(void);
 void HASH_RNG_IRQHandler(void);
-void DMA2D_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

@@ -29,7 +29,7 @@
 #define _CCMC __attribute__ ((section(".ccmram")))
 #define _CCMD __attribute__ ((section(".ccmram-data")))
 
-#define FB_SIZE 32
+#define FB_SIZE 10
 
 #define USE_XPT2046 1
 /* --------------

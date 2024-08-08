@@ -26,7 +26,7 @@
 #include "ILI9341_GFX.h"
 #include <stdbool.h>
 #include "../lvgl/lvgl.h"
-#include "../lv_examples/lv_examples.h"
+#include "../lvgl/demos/benchmark/lv_demo_benchmark.h"
 #include "touchpad.h"
 #include "XPT2046_lv.h"
 /* USER CODE END Includes */
@@ -38,6 +38,10 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// Define if you want to run LVGL benchmark
+#define USE_LVGL_BENCHMARK
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,8 +50,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-DMA2D_HandleTypeDef hdma2d;
-
 RNG_HandleTypeDef hrng;
 
 SPI_HandleTypeDef hspi1;
@@ -75,7 +77,6 @@ static void MX_RNG_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
-static void MX_DMA2D_Init(void);
 static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
@@ -120,7 +121,6 @@ int main(void)
   MX_FMC_Init();
   MX_SPI1_Init();
   MX_USB_OTG_FS_HCD_Init();
-  MX_DMA2D_Init();
 
   /* Initialize interrupts */
   MX_NVIC_Init();
@@ -130,39 +130,41 @@ int main(void)
   ILI9341_Init();
   lv_touchpad_init();
   HAL_Delay(100);
+  #ifdef USE_LVGL_BENCHMARK
   lv_demo_benchmark();
   //lv_demo_widgets();
-
-  for (int i= 0; i<10;i++){
-  lcd_fill_rand_colors();
-  HAL_Delay(300);
-  }
-
+  //lv_demo_stress();
+  #else
+    for (int i= 0; i<10;i++){
+      lcd_fill_rand_colors();
+      HAL_Delay(300);
+    }
+  #endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
-ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
-ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
-HAL_Delay(2000);
-lcd_random_points();
-ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
-ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
-ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
-lcd_random_points();
-lcd_random_circles();
-lcd_random_points();
-lcd_random_rectangles();
-lcd_random_points();
-lcd_random_lines();
-
-
-//ILI9341_Draw_Filled_Circle(last_x - 2, 240 - last_y - 2, 4, RED);
-//lv_task_handler();
-//HAL_Delay(1000);
+  #ifdef USE_LVGL_BENCHMARK
+  lv_task_handler();
+  HAL_Delay(100);
+  #else
+    ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
+    ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
+    ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
+    HAL_Delay(2000);
+    lcd_random_points();
+    ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
+    ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
+    ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
+    lcd_random_points();
+    lcd_random_circles();
+    lcd_random_points();
+    lcd_random_rectangles();
+    lcd_random_points();
+    lcd_random_lines();
+  #endif
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -225,43 +227,6 @@ static void MX_NVIC_Init(void)
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
-}
-
-/**
-  * @brief DMA2D Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_DMA2D_Init(void)
-{
-
-  /* USER CODE BEGIN DMA2D_Init 0 */
-
-  /* USER CODE END DMA2D_Init 0 */
-
-  /* USER CODE BEGIN DMA2D_Init 1 */
-
-  /* USER CODE END DMA2D_Init 1 */
-  hdma2d.Instance = DMA2D;
-  hdma2d.Init.Mode = DMA2D_M2M;
-  hdma2d.Init.ColorMode = DMA2D_OUTPUT_RGB565;
-  hdma2d.Init.OutputOffset = 0;
-  hdma2d.LayerCfg[1].InputOffset = 0;
-  hdma2d.LayerCfg[1].InputColorMode = DMA2D_INPUT_RGB565;
-  hdma2d.LayerCfg[1].AlphaMode = DMA2D_NO_MODIF_ALPHA;
-  hdma2d.LayerCfg[1].InputAlpha = 0;
-  if (HAL_DMA2D_Init(&hdma2d) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  if (HAL_DMA2D_ConfigLayer(&hdma2d, 1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN DMA2D_Init 2 */
-
-  /* USER CODE END DMA2D_Init 2 */
-
 }
 
 /**
@@ -376,12 +341,12 @@ static void MX_DMA_Init(void)
   hdma_memtomem_dma2_stream0.Init.Direction = DMA_MEMORY_TO_MEMORY;
   hdma_memtomem_dma2_stream0.Init.PeriphInc = DMA_PINC_ENABLE;
   hdma_memtomem_dma2_stream0.Init.MemInc = DMA_MINC_ENABLE;
-  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_BYTE;
-  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_BYTE;
+  hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+  hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
   hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
-  hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_HIGH;
+  hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_VERY_HIGH;
   hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
-  hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
+  hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
   hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
   hdma_memtomem_dma2_stream0.Init.PeriphBurst = DMA_PBURST_SINGLE;
   if (HAL_DMA_Init(&hdma_memtomem_dma2_stream0) != HAL_OK)

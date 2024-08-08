@@ -8,7 +8,7 @@
  *********************/
 //#include "hal_stm_lvgl/tft/tft.h"
 #include "../lvgl/lvgl.h"
-#include "../lvgl/src/lv_font/lv_symbol_def.h"
+#include "../lvgl/src/font/lv_symbol_def.h"
 #include "XPT2046_lv.h"
 #include "stm32f4xx_hal.h"
 
