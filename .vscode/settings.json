@@ -1,0 +1,16 @@
+{
+    "files.associations": {
+        "lv_conf.h": "c",
+        "xpt2046_lv.h": "c",
+        "config.h": "c",
+        "main.h": "c",
+        "cmath": "c",
+        "complex": "c",
+        "random": "c",
+        "compare": "c",
+        "cstdint": "c",
+        "lvgl.h": "c",
+        "ili9341_stm32_driver.h": "c",
+        "ui.h": "c"
+    }
+}
