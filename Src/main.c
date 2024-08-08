@@ -29,6 +29,7 @@
 #include "../lvgl/demos/benchmark/lv_demo_benchmark.h"
 #include "touchpad.h"
 #include "XPT2046_lv.h"
+#include "../src/ui/ui.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,6 +129,7 @@ int main(void)
   HAL_Delay(100);
   #ifdef USE_LVGL_BENCHMARK
   lv_demo_benchmark();
+  ui_init();
   //lv_demo_widgets();
   //lv_demo_stress();
   #else
@@ -144,6 +146,7 @@ int main(void)
   {
   #ifdef USE_LVGL_BENCHMARK
   lv_task_handler();
+  ui_tick();
   HAL_Delay(100);
   #else
     ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
