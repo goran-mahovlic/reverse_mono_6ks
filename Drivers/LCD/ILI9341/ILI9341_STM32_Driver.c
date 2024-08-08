@@ -120,11 +120,9 @@ void DMA2_Stream0_IRQHandler(void);
 void LV_tft_init(void)
 {
 	static lv_color_t buf[ILI9341_SCREEN_WIDTH * FB_SIZE];
-	
 	static lv_disp_draw_buf_t disp_buf;
 	
 	lv_disp_draw_buf_init(&disp_buf, buf, NULL, ILI9341_SCREEN_WIDTH * FB_SIZE);
-
     /*-----------------------------------
      * Register the display in LVGL
      *----------------------------------*/
@@ -277,18 +275,6 @@ void ILI9341_Write_Command(uint16_t data)
 	LCD->LCD_REG=data; 
 }
 
-void lcdDelay(uint32_t delayms)
-{
-		HAL_Delay(delayms);
-/*
-	#ifdef USERTOS
-	osDelay(delayms);
-	#else
-HAL_Delay(delayms);
-	#endif
-	*/
-}
-
 /*****************************************************************************
  * @name       :void ILI9341_Write_Data(uint16_t data)
  * @date       :2018-08-09 
@@ -301,6 +287,19 @@ void ILI9341_Write_Data(uint16_t data)
 	HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
 	//HAL_Delay(1);
 	LCD->LCD_RAM=data; 
+}
+
+
+void lcdDelay(uint32_t delayms)
+{
+		HAL_Delay(delayms);
+/*
+	#ifdef USERTOS
+	osDelay(delayms);
+	#else
+HAL_Delay(delayms);
+	#endif
+	*/
 }
 
 /* Set Address - Location block - to draw into */
