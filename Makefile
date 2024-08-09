@@ -44,7 +44,6 @@ src/ui/images.c \
 src/ui/styles.c \
 src/ui/ui.c \
 src/ui/eez-flow-lz4.c \
-src/ui/eez-flow-sha256.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_2.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_1.c \
 lvgl/examples/libs/qrcode/lv_example_qrcode_1.c \
@@ -474,6 +473,7 @@ Src/syscalls.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_hcd.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rtc_ex.c
+#src/ui/eez-flow-sha256.c
 #Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
 #Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c#Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_dma2d.c
 include lvgl/lvgl.mk
