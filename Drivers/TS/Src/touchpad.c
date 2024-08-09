@@ -45,7 +45,7 @@ void lv_touchpad_init(void)
 {
 
   xpt2046_lv_init();
-  lv_indev_drv_t indev_drv;
+  static lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
   indev_drv.read_cb = xpt2046_read;
   indev_drv.type = LV_INDEV_TYPE_POINTER;

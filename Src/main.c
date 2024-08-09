@@ -43,7 +43,7 @@
 /* USER CODE BEGIN PD */
 
 // Define if you want to run LVGL benchmark
-#define USE_LVGL_BENCHMARK
+#define USE_EEZ_PROJECT
 
 /* USER CODE END PD */
 
@@ -137,7 +137,7 @@ int main(void)
   ILI9341_Init();
   lv_touchpad_init();
   HAL_Delay(100);
-  #ifdef USE_LVGL_BENCHMARK
+  #ifdef USE_EEZ_PROJECT
   //lv_demo_benchmark();
   ui_init();
   //lv_demo_widgets();
@@ -154,7 +154,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  #ifdef USE_LVGL_BENCHMARK
+  #ifdef USE_EEZ_PROJECT
+
   lv_task_handler();
   ui_tick();
   HAL_Delay(10);

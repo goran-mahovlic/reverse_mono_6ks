@@ -44,6 +44,7 @@ src/ui/images.c \
 src/ui/styles.c \
 src/ui/ui.c \
 src/ui/eez-flow-lz4.c \
+src/ui/eez-flow-sha256.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_2.c \
 lvgl/examples/libs/ffmpeg/lv_example_ffmpeg_1.c \
 lvgl/examples/libs/qrcode/lv_example_qrcode_1.c \
