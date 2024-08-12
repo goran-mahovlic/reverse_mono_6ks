@@ -74,13 +74,13 @@ SRAM_HandleTypeDef hsram1;
   extern uint8_t last_state;
   */
 
-#ifdef SPI_EMUL_MASTER_SIDE
-SPI_Emul_HandleTypeDef  SpiEmulHandle;
-#endif /*SPI_EMUL_MASTER_SIDE */
-
 #ifdef SPI_HW_SLAVE_SIDE
 SPI_HandleTypeDef SpiHandle;
 #endif /*SPI_HW_SLAVE_SIDE */
+
+#ifdef SPI_EMUL_MASTER_SIDE
+extern SPI_Emul_HandleTypeDef sspi;
+#endif /*SPI_EMUL_MASTER_SIDE */
 
 /* Buffer used for transmission */
 uint8_t aTxBuffer[] = "**** SPI - Two Boards communication ****";
@@ -633,15 +633,15 @@ static void SPI_EMUL_Init(){
   #ifdef SPI_EMUL_MASTER_SIDE
     /*## Configure the SPI Emulation  ######################################*/
 
-    SpiEmulHandle.Init.Mode           = SPI_EMUL_MODE_MASTER;
-    SpiEmulHandle.Init.Direction      = SPI_EMUL_DIRECTION_TX_RX;
-    SpiEmulHandle.Init.DataSize       = SPI_EMUL_DATASIZE_8BIT;
-    SpiEmulHandle.Init.CLKPolarity    = SPI_EMUL_POLARITY_LOW;
-    SpiEmulHandle.Init.CLKPhase       = SPI_EMUL_PHASE_1EDGE;
-    SpiEmulHandle.Init.SPI_Clk        = 662000;
-    SpiEmulHandle.Init.FirstBit       = SPI_EMUL_FIRSTBIT_MSB;
+    sspi.Init.Mode           = SPI_EMUL_MODE_MASTER;
+    sspi.Init.Direction      = SPI_EMUL_DIRECTION_TX_RX;
+    sspi.Init.DataSize       = SPI_EMUL_DATASIZE_8BIT;
+    sspi.Init.CLKPolarity    = SPI_EMUL_POLARITY_LOW;
+    sspi.Init.CLKPhase       = SPI_EMUL_PHASE_1EDGE;
+    sspi.Init.SPI_Clk        = 662000;
+    sspi.Init.FirstBit       = SPI_EMUL_FIRSTBIT_MSB;
 
-    if (HAL_SPI_Emul_Init(&SpiEmulHandle) != HAL_OK)
+    if (HAL_SPI_Emul_Init(&sspi) != HAL_OK)
     {
       Error_Handler();
     }
@@ -650,12 +650,12 @@ static void SPI_EMUL_Init(){
     /* While the SPI Emulation in reception process, user can transmit data through
       "aTxBuffer" buffer */
 
-    if (HAL_SPI_Emul_TransmitReceive_DMA(&SpiEmulHandle, (uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, TXBUFFERSIZE) != HAL_OK)
-    {
-      Error_Handler();
-    }
-    while (__HAL_SPI_EMUL_GET_FLAG(&SpiEmulHandle, SPI_EMUL_FLAG_TC) != SET)
-    {}
+   // if (HAL_SPI_Emul_TransmitReceive_DMA(&sspi, (uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, TXBUFFERSIZE) != HAL_OK)
+   // {
+   //   Error_Handler();
+   // }
+   // while (__HAL_SPI_EMUL_GET_FLAG(&sspi, SPI_EMUL_FLAG_TC) != SET)
+   // {}
   #endif /* SPI_EMUL_MASTER_SIDE */
 
   #ifdef SPI_HW_SLAVE_SIDE
@@ -713,7 +713,7 @@ static void SPI_EMUL_Init(){
   *         add your own implementation.
   * @retval None
   */
-void HAL_SPI_Emul_ErrorCallback(SPI_Emul_HandleTypeDef *SpiEmulHandle)
+void HAL_SPI_Emul_ErrorCallback(SPI_Emul_HandleTypeDef *sspi)
 {
   /* Turn on LED2 : Transfer error in reception/transmission process */
   while (1)

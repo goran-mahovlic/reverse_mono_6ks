@@ -18,7 +18,7 @@
 /**********************
  *      TYPEDEFS
  **********************/
-extern SPI_HandleTypeDef hspi2;
+extern SPI_Emul_HandleTypeDef sspi;
 /**********************
  *  STATIC PROTOTYPES
  **********************/

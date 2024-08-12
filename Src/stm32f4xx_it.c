@@ -61,7 +61,7 @@
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 extern RNG_HandleTypeDef hrng;
 /* USER CODE BEGIN EV */
-
+extern volatile uint8_t Touch_IRQ;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -219,7 +219,7 @@ void RCC_IRQHandler(void)
 void EXTI9_5_IRQHandler(void)
 {
   /* USER CODE BEGIN EXTI9_5_IRQn 0 */
-
+  Touch_IRQ = true;
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(TS_IRQ_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */

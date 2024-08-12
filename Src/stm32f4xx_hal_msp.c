@@ -50,8 +50,8 @@
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
 #ifdef SPI_EMUL_MASTER_SIDE
-extern SPI_Emul_HandleTypeDef  SpiEmulHandle;
-SPI_Emul_HandleTypeDef *hspi;
+extern SPI_Emul_HandleTypeDef  sspi;
+//SPI_Emul_HandleTypeDef *sspi;
 #endif
 /* USER CODE END PV */
 
@@ -517,6 +517,100 @@ void HAL_SRAM_MspDeInit(SRAM_HandleTypeDef* hsram){
 
   /* USER CODE END SRAM_MspDeInit 1 */
 }
+
+#ifdef SPI_EMUL_MASTER_SIDE
+/**
+  * @brief TIM MSP Initialization
+  *        This function configures the hardware resources used in this example:
+  *           - Peripheral's clock enable
+  *           - Peripheral's GPIO Configuration
+  * @param htim: TIM handle pointer
+  * @retval None
+  */
+void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
+{
+  GPIO_InitTypeDef   GPIO_InitStruct;
+
+  /*##-1- Enable peripherals and GPIO Clocks #################################*/
+  /* TIMx Peripheral clock enable */
+  TIMx_CLK_ENABLE();
+
+  /* Enable GPIO channels Clock */
+  TIMx_CHANNEL_GPIO_PORT();
+
+  /* Configure  (TIMx_Channel) in Alternate function, push-pull and 100MHz speed */
+  GPIO_InitStruct.Pin = GPIO_PIN_CHANNEL;
+  GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
+  GPIO_InitStruct.Alternate = GPIO_AF_TIMx;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIO_PORT, &GPIO_InitStruct);
+
+}
+
+/**
+  * @brief  Initializes the SPI MSP.
+  *        This function configures the SPI resources used in this example:
+  * @param htim: SPI handle pointer
+  * @retval None
+  */
+void HAL_SPI_Emul_MspInit(SPI_Emul_HandleTypeDef *hspi)
+{
+  GPIO_InitTypeDef   GPIO_InitStruct;
+
+  /*##-1- Enable peripherals and GPIO Clocks #######################*/
+  /* Enable clock for SPI Emul */
+  __SPI_EMUL_CLK_ENABLE();
+
+  /* Enable GPIO clock */
+  SPI_EMUL_Clk_GPIO_CLK_ENABLE();
+  SPI_EMUL_TX_GPIO_CLK_ENABLE();
+  SPI_EMUL_RX_GPIO_CLK_ENABLE();
+
+  /* Initialize SPI Emulation port name */
+  sspi.ClkPortName = SPI_EMUL_Clk_PORT;
+  sspi.TxPortName = SPI_EMUL_TX_PORT;
+  sspi.RxPortName = SPI_EMUL_RX_PORT;
+
+  /*Initialize SPI Emulation pin number for Clk TX */
+  sspi.Init.ClkPinNumber = SPI_EMUL_Clk_PIN;
+  sspi.Init.TxPinNumber = SPI_EMUL_TX_PIN;
+  sspi.Init.RxPinNumber = SPI_EMUL_RX_PIN;
+
+  /* Configure GPIOA for SPI Emulation Clock */
+  GPIO_InitStruct.Pin    = SPI_EMUL_Clk_PIN;
+  GPIO_InitStruct.Mode   = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull   = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed  = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(SPI_EMUL_Clk_PORT, &GPIO_InitStruct);
+
+  /* Configure GPIOC for SPI Emulation Tx */
+  GPIO_InitStruct.Pin    = SPI_EMUL_TX_PIN;
+  GPIO_InitStruct.Mode   = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull   = GPIO_NOPULL;
+  GPIO_InitStruct.Speed  = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(SPI_EMUL_TX_PORT, &GPIO_InitStruct);
+
+  /* Configure GPIOC for SPI Emulation Rx */
+  GPIO_InitStruct.Pin    = SPI_EMUL_RX_PIN;
+  GPIO_InitStruct.Mode   = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull   = GPIO_NOPULL;
+  GPIO_InitStruct.Speed  = GPIO_SPEED_HIGH;
+  HAL_GPIO_Init(SPI_EMUL_RX_PORT, &GPIO_InitStruct);
+
+  /*##-1- Enable peripherals and GPIO Clocks #######################*/
+  /* Enable clock for SPI Emul */
+  __SPI_EMUL_CLK_ENABLE();
+}
+
+/**
+  * @brief  DeInitializes the Global MSP.
+  * @param  None
+  * @retval None
+  */
+void HAL_SPI_Emul_MspDeInit(SPI_Emul_HandleTypeDef *hspi)
+{}
+#endif /* SPI_EMUL_MASTER_SIDE */
 
 /* USER CODE BEGIN 1 */
 #ifdef SPI_EMUL_SLAVE_SIDE

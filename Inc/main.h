@@ -32,6 +32,8 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32f4xx_spi_master_emul.h"
+
 #define SPI_EMUL_MASTER_SIDE
 
 #ifdef SPI_EMUL_MASTER_SIDE
@@ -41,10 +43,10 @@ extern "C" {
 
 
 /* Definition for TIMx Pins */
-#define TIMx_CHANNEL_GPIO_PORT()       __HAL_RCC_GPIOA_CLK_ENABLE()
+#define TIMx_CHANNEL_GPIO_PORT()       __HAL_RCC_GPIOD_CLK_ENABLE()
 #define GPIO_PORT                      GPIOD
 #define GPIO_PIN_CHANNEL               GPIO_PIN_13
-#define GPIO_AF_TIMx                   GPIO_AF1_TIM4
+#define GPIO_AF_TIMx                   GPIO_AF2_TIM4
 
 /* Initialize GPIO and pin number for SPI Emulation */
 #define SPI_EMUL_Clk_PIN                GPIO_PIN_13
@@ -69,6 +71,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 #define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
+
+volatile uint8_t Touch_IRQ;
 
 #endif /* SPI_EMUL_MASTER_SIDE */
 
