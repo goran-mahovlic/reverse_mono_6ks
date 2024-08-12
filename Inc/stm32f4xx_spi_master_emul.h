@@ -46,7 +46,10 @@ extern "C"
 
   /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal_def.h"
-#include "stm32f4xx_nucleo.h"
+#include "stm32f4xx_hal_tim.h"
+#include "stm32f4xx_hal_tim_ex.h"
+//#include "stm32f4xx_nucleo.h"
+#include "stm32f4xx_hal.h"
 #include "main.h"
 
 /** @addtogroup STM32F4xx_HAL_SPI_MASTER_EMUL_Driver

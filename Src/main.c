@@ -25,6 +25,7 @@
 #include <stdbool.h>
 #include <sys/time.h>
 #include <time.h>
+#include "stm32f4xx_spi_master_emul.h"
 #include "../lvgl/lvgl.h"
 #include "../lvgl/demos/benchmark/lv_demo_benchmark.h"
 #include "touchpad.h"
@@ -44,7 +45,6 @@
 
 // Define if you want to run LVGL benchmark
 #define USE_EEZ_PROJECT
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -59,9 +59,12 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim14;
+
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
+
 SRAM_HandleTypeDef hsram1;
 
 /* USER CODE BEGIN PV */
@@ -70,6 +73,21 @@ SRAM_HandleTypeDef hsram1;
   extern int16_t last_y;
   extern uint8_t last_state;
   */
+
+#ifdef SPI_EMUL_MASTER_SIDE
+SPI_Emul_HandleTypeDef  SpiEmulHandle;
+#endif /*SPI_EMUL_MASTER_SIDE */
+
+#ifdef SPI_HW_SLAVE_SIDE
+SPI_HandleTypeDef SpiHandle;
+#endif /*SPI_HW_SLAVE_SIDE */
+
+/* Buffer used for transmission */
+uint8_t aTxBuffer[] = "**** SPI - Two Boards communication ****";
+
+/* Buffer used for reception */
+uint8_t aRxBuffer[BUFFERSIZE];
+
   extern uint8_t isTouched;
   uint16_t x = 0, y = 0;
 /* USER CODE END PV */
@@ -83,17 +101,24 @@ static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_RTC_Init(void);
+static void MX_TIM14_Init(void);
 /* USER CODE BEGIN PFP */
+ static void SPI_EMUL_Init(void);
+
+static uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength);
+volatile int RestTx = 0;
+
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 int _gettimeofday( struct timeval *tv, void *tzvp )
 {
     // you can add code here there many example in google search.
     return 0;  // return non-zero for error
 } // end _gettimeofday()
-/* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-uint16_t color = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -131,8 +156,9 @@ int main(void)
   MX_SPI1_Init();
   MX_USB_OTG_FS_HCD_Init();
   MX_RTC_Init();
+  MX_TIM14_Init();
   /* USER CODE BEGIN 2 */
-
+  SPI_EMUL_Init();
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
@@ -329,6 +355,51 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM14 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM14_Init(void)
+{
+
+  /* USER CODE BEGIN TIM14_Init 0 */
+
+  /* USER CODE END TIM14_Init 0 */
+
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM14_Init 1 */
+
+  /* USER CODE END TIM14_Init 1 */
+  htim14.Instance = TIM14;
+  htim14.Init.Prescaler = 0;
+  htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim14.Init.Period = 65535;
+  htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim14.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim14) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim14, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM14_Init 2 */
+
+  /* USER CODE END TIM14_Init 2 */
+
+}
+
+/**
   * @brief USB_OTG_FS Initialization Function
   * @param None
   * @retval None
@@ -477,13 +548,16 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_REAL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : MOTOR_PIN1_Pin MOTOR_PIN2_Pin MOTOR_PIN3_Pin */
   GPIO_InitStruct.Pin = MOTOR_PIN1_Pin|MOTOR_PIN2_Pin|MOTOR_PIN3_Pin;
@@ -499,25 +573,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(D1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_REAL_Pin LCD_BL_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_Pin LCD_BL_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_Pin|LCD_BL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TS_CS_Pin TS_CLK_REAL_Pin */
-  GPIO_InitStruct.Pin = TS_CS_Pin|TS_CLK_REAL_Pin;
+  /*Configure GPIO pin : TS_CS_Pin */
+  GPIO_InitStruct.Pin = TS_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+  HAL_GPIO_Init(TS_CS_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TS_DIN_REAL_Pin */
-  GPIO_InitStruct.Pin = TS_DIN_REAL_Pin;
+  /*Configure GPIO pin : TS_DIN_Pin */
+  GPIO_InitStruct.Pin = TS_DIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TS_DIN_REAL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(TS_DIN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TS_IRQ_Pin */
   GPIO_InitStruct.Pin = TS_IRQ_Pin;
@@ -532,6 +606,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(FMC_A1_REAL_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA9 */
+  GPIO_InitStruct.Pin = GPIO_PIN_9;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
@@ -541,6 +622,128 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+static void SPI_EMUL_Init(){
+
+  /* STM32F4xx HAL library initialization:
+      - Configure the Flash prefetch, instruction and Data caches
+      - Configure the Systick to generate an interrupt each 1 msec
+      - Set NVIC Group Priority to 4
+      - Global MSP (MCU Support Package) initialization
+    */
+  #ifdef SPI_EMUL_MASTER_SIDE
+    /*## Configure the SPI Emulation  ######################################*/
+
+    SpiEmulHandle.Init.Mode           = SPI_EMUL_MODE_MASTER;
+    SpiEmulHandle.Init.Direction      = SPI_EMUL_DIRECTION_TX_RX;
+    SpiEmulHandle.Init.DataSize       = SPI_EMUL_DATASIZE_8BIT;
+    SpiEmulHandle.Init.CLKPolarity    = SPI_EMUL_POLARITY_LOW;
+    SpiEmulHandle.Init.CLKPhase       = SPI_EMUL_PHASE_1EDGE;
+    SpiEmulHandle.Init.SPI_Clk        = 662000;
+    SpiEmulHandle.Init.FirstBit       = SPI_EMUL_FIRSTBIT_MSB;
+
+    if (HAL_SPI_Emul_Init(&SpiEmulHandle) != HAL_OK)
+    {
+      Error_Handler();
+    }
+
+    /*## Start the transmission process #####################################*/
+    /* While the SPI Emulation in reception process, user can transmit data through
+      "aTxBuffer" buffer */
+
+    if (HAL_SPI_Emul_TransmitReceive_DMA(&SpiEmulHandle, (uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, TXBUFFERSIZE) != HAL_OK)
+    {
+      Error_Handler();
+    }
+    while (__HAL_SPI_EMUL_GET_FLAG(&SpiEmulHandle, SPI_EMUL_FLAG_TC) != SET)
+    {}
+  #endif /* SPI_EMUL_MASTER_SIDE */
+
+  #ifdef SPI_HW_SLAVE_SIDE
+
+    /*##-1- Configure the SPI peripheral #######################################*/
+    /* Set the SPI parameters */
+    SpiHandle.Instance               = SPIx;
+    SpiHandle.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_32;
+    SpiHandle.Init.Direction         = SPI_DIRECTION_2LINES;
+    SpiHandle.Init.CLKPhase          = SPI_PHASE_1EDGE;
+    SpiHandle.Init.CLKPolarity       = SPI_POLARITY_LOW;
+    SpiHandle.Init.CRCCalculation    = SPI_CRCCALCULATION_DISABLE;
+    SpiHandle.Init.CRCPolynomial     = 7;
+    SpiHandle.Init.DataSize          = SPI_DATASIZE_8BIT;
+    SpiHandle.Init.FirstBit          = SPI_FIRSTBIT_MSB;
+    SpiHandle.Init.NSS               = SPI_NSS_SOFT;
+    SpiHandle.Init.TIMode            = SPI_TIMODE_DISABLE;
+    SpiHandle.Init.Mode = SPI_MODE_SLAVE;
+
+    if (HAL_SPI_Init(&SpiHandle) != HAL_OK)
+    {
+      /* Initialization Error */
+      Error_Handler();
+    }
+
+    if (HAL_SPI_TransmitReceive_DMA(&SpiHandle  , (uint8_t*)aTxBuffer , (uint8_t *)aRxBuffer, BUFFERSIZE) != HAL_OK)
+    {
+      /* Transfer error in transmission process */
+      Error_Handler();
+    }
+
+    /*##-3- Wait for the end of the transfer ###################################*/
+    /*  Before starting a new communication transfer, you need to check the current
+        state of the peripheral; if it’s busy you need to wait for the end of current
+        transfer before starting a new one.
+        For simplicity reasons, this example is just waiting till the end of the 
+        transfer, but application may perform other tasks while transfer operation
+        is ongoing. */
+    while (HAL_SPI_GetState(&SpiHandle) != HAL_SPI_STATE_READY)
+    {}
+
+  #endif /* SPI_HW_SLAVE_SIDE */
+    /*##-4- Compare the sent and received buffers ##############################*/
+    if (Buffercmp((uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, BUFFERSIZE))
+    {
+      /* Transfer error in transmission process */
+      Error_Handler();
+    }
+  }
+
+/**
+  * @brief  SPI Emulation error callbacks
+  * @param  SpiHandle: SPI handle
+  * @note   This example shows a simple way to report transfer error, and you can
+  *         add your own implementation.
+  * @retval None
+  */
+void HAL_SPI_Emul_ErrorCallback(SPI_Emul_HandleTypeDef *SpiEmulHandle)
+{
+  /* Turn on LED2 : Transfer error in reception/transmission process */
+  while (1)
+  {
+    //BSP_LED_Toggle(LED2);
+    HAL_Delay(100);
+  }
+}
+
+/**
+  * @brief  Compares two buffers.
+  * @param  pBuffer, pBuffer1: buffers to be compared.
+  * @param  BufferLength: buffer's length
+  * @retval PASSED: pBuffer identical to pBuffer1
+  *         FAILED: pBuffer differs from pBuffer1
+  */
+static uint16_t Buffercmp(uint8_t* pBuffer1, uint8_t* pBuffer2, uint16_t BufferLength)
+{
+  while (BufferLength--)
+  {
+    if ((*pBuffer1) != *pBuffer2)
+    {
+      return BufferLength;
+    }
+    pBuffer1++;
+    pBuffer2++;
+  }
+
+  return 0;
+}
 
 /* USER CODE END 4 */
 

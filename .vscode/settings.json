@@ -12,6 +12,8 @@
         "lvgl.h": "c",
         "ili9341_stm32_driver.h": "c",
         "ui.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "stm32f4xx_spi_master_emul.h": "c",
+        "stm32f4xx_hal.h": "c"
     }
 }
