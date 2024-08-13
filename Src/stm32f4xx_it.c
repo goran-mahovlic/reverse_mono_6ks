@@ -60,6 +60,7 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 extern RNG_HandleTypeDef hrng;
+extern TIM_HandleTypeDef htim4;
 /* USER CODE BEGIN EV */
 extern volatile uint8_t Touch_IRQ;
 /* USER CODE END EV */
@@ -206,7 +207,6 @@ void SysTick_Handler(void)
 void RCC_IRQHandler(void)
 {
   /* USER CODE BEGIN RCC_IRQn 0 */
-
   /* USER CODE END RCC_IRQn 0 */
   /* USER CODE BEGIN RCC_IRQn 1 */
 
@@ -225,6 +225,20 @@ void EXTI9_5_IRQHandler(void)
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM4 global interrupt.
+  */
+void TIM4_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM4_IRQn 0 */
+
+  /* USER CODE END TIM4_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim4);
+  /* USER CODE BEGIN TIM4_IRQn 1 */
+
+  /* USER CODE END TIM4_IRQn 1 */
 }
 
 /**

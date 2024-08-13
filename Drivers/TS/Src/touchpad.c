@@ -18,7 +18,6 @@
 /**********************
  *      TYPEDEFS
  **********************/
-extern SPI_Emul_HandleTypeDef sspi;
 /**********************
  *  STATIC PROTOTYPES
  **********************/
@@ -43,14 +42,12 @@ extern SPI_Emul_HandleTypeDef sspi;
 lv_indev_t * indev_touchpad;
 void lv_touchpad_init(void)
 {
-
   xpt2046_lv_init();
   static lv_indev_drv_t indev_drv;
   lv_indev_drv_init(&indev_drv);
   indev_drv.read_cb = xpt2046_read;
   indev_drv.type = LV_INDEV_TYPE_POINTER;
   indev_touchpad = lv_indev_drv_register(&indev_drv);
-
 }
 
 /**********************

@@ -44,16 +44,10 @@ uint8_t avg_last;
      uint8_t last_state = 0;
 
 extern volatile uint8_t Touch_IRQ;
-//static SPI_HandleTypeDef *_spi;
-//static SPI_HandleTypeDef hspi2;
-
 
 #ifdef SPI_EMUL_MASTER_SIDE
-SPI_Emul_HandleTypeDef  sspi;
+static SPI_Emul_HandleTypeDef sspi;
 #endif /*SPI_EMUL_MASTER_SIDE */
-
-//extern SPI_Emul_HandleTypeDef sspi;
-SPI_Emul_HandleTypeDef *_spi;
 
 //SPI_Emul_HandleTypeDef sspi;
 uint8_t isTouched = 0;
@@ -64,7 +58,6 @@ uint8_t isTouched = 0;
 static touchOrienation _orient;
 static uint16_t _width, _height;
 
-//static void _spi_init(void);
 static void _XPT2046_TouchSelect(void);
 static void _XPT2046_TouchUnselect(void);
 /**********************
@@ -80,7 +73,6 @@ static void _XPT2046_TouchUnselect(void);
  */
 void xpt2046_lv_init(void)
 {
-    //XPT2046_init(_spi, XPT2046_LANDSCAPE, XPT2046_HOR_RES, XPT2046_VER_RES);
     XPT2046_init(&sspi, XPT2046_LANDSCAPE, XPT2046_HOR_RES, XPT2046_VER_RES);
 }
 
@@ -105,7 +97,7 @@ static void _XPT2046_TouchUnselect(void)
     HAL_GPIO_WritePin(XPT2046_CS_GPIO_Port, XPT2046_CS_Pin, GPIO_PIN_SET);
 }
 void XPT2046_init(SPI_Emul_HandleTypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height) {
-	_spi = spi;
+	 //_sspi = spi;
 	_orient = orientation;
 	_width = width;
 	_height = height;
@@ -122,8 +114,6 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
     last_state = LV_INDEV_STATE_PR;
             	//Если включен контроль скорости SPI, то сохранение параметров и установка правильных значений
 	#ifdef XPT2046_SPI_PARAM_CONTROL
-	//SPI_HandleTypeDef old_spi =  *_spi;//Сохранение старых параметров SPI
-	//_spi_init(); //Инициализация с правильными параметрами
 	#endif
         _XPT2046_TouchSelect();
 
@@ -144,13 +134,13 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
 
         nsamples++;
 
-        HAL_SPI_Emul_Transmit_DMA(_spi, (uint8_t*)_cmd_read_y, sizeof(_cmd_read_y));
+        HAL_SPI_Emul_Transmit_DMA(&sspi, (uint8_t*)_cmd_read_y, sizeof(_cmd_read_y));
         uint8_t y_raw[2];
-        HAL_SPI_Emul_TransmitReceive_DMA(_spi, (uint8_t*)_zeroes_tx, y_raw, sizeof(y_raw));
+        HAL_SPI_Emul_TransmitReceive_DMA(&sspi, (uint8_t*)_zeroes_tx, y_raw, sizeof(y_raw));
 
-        HAL_SPI_Emul_Transmit_DMA(_spi, (uint8_t*)_cmd_read_x, sizeof(_cmd_read_x));
+        HAL_SPI_Emul_Transmit_DMA(&sspi, (uint8_t*)_cmd_read_x, sizeof(_cmd_read_x));
         uint8_t x_raw[2];
-        HAL_SPI_Emul_Receive_DMA(_spi, x_raw, sizeof(x_raw));
+        HAL_SPI_Emul_Receive_DMA(&sspi, x_raw, sizeof(x_raw));
 
         avg_x += (((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
         avg_y += (((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
@@ -161,9 +151,8 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
         	//Восстановление старых параметров
             
 	#ifdef XPT2046_SPI_PARAM_CONTROL
-	//*_spi = old_spi; 
 	//Инициализация с старыми параметрами
-  if (HAL_SPI_Emul_Init(_spi) != HAL_OK) Error_Handler();
+  if (HAL_SPI_Emul_Init(&sspi) != HAL_OK) Error_Handler();
 	#endif  
 
     if(nsamples < XPT2046_AVG)
@@ -228,25 +217,6 @@ bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
     return false;
 }
 #ifdef SPI_HW
-
-#ifdef XPT2046_SPI_PARAM_CONTROL
-static void _spi_init(void) {
-  _spi->Instance = SPI2;
-  _spi->Init.Mode = SPI_MODE_MASTER;
-  _spi->Init.Direction = SPI_DIRECTION_2LINES;
-  _spi->Init.DataSize = SPI_DATASIZE_8BIT;
-  _spi->Init.CLKPolarity = SPI_POLARITY_LOW;
-  _spi->Init.CLKPhase = SPI_PHASE_1EDGE;
-  _spi->Init.NSS = SPI_NSS_SOFT;
-	//Делитель частоты SPI. Установите безопасное значение в XPT2046.h
-  _spi->Init.BaudRatePrescaler = XPT2046_SPI_PRESCALER;
-  _spi->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  _spi->Init.TIMode = SPI_TIMODE_DISABLE;
-  _spi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  _spi->Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(_spi) != HAL_OK) Error_Handler();
-}
-#endif
 
 #endif
 /**********************

@@ -120,17 +120,17 @@
 static TIM_HandleTypeDef  TimHandle;
 
 /* DMA Handle declaration Tx */
-static DMA_HandleTypeDef  hdma_tx;
+static DMA_HandleTypeDef  hdma_tim4_ch2;
 
 /* DMA Handle declaration Rx*/
-static DMA_HandleTypeDef  hdma_rx;
+static DMA_HandleTypeDef  hdma_tim4_ch1;
 
 /* Timer Output Compare Configuration Structure declaration */
 static TIM_OC_InitTypeDef       sConfig;
 static TIM_OC_InitTypeDef       sConfig1;
 
 /* SPI Emulation Handle */
-static SPI_Emul_HandleTypeDef      *hspi_emul;
+static SPI_Emul_HandleTypeDef *sspi;
 
 /* Buffer used for transmission */
 static uint32_t *pBuffer_Tx[4*(TX_BUFFER_SIZE)];
@@ -214,7 +214,7 @@ HAL_StatusTypeDef HAL_SPI_Emul_Init(SPI_Emul_HandleTypeDef *hspi)
     HAL_SPI_Emul_MspInit(hspi);
   }
   /* Get Structure for spi emul Handle */
-  hspi_emul = hspi;
+  sspi = hspi;
 
   /* Set the TIM state */
   hspi->State = HAL_SPI_EMUL_STATE_BUSY;
@@ -309,14 +309,14 @@ static void SPI_Emul_SetConfig (SPI_Emul_HandleTypeDef *hspi)
     bit_time = ((uint32_t) (((HAL_RCC_GetPCLK2Freq() * 2) / hspi->Init.SPI_Clk) - 1));
   }
 
-  /*##-1- Configure  the Timer peripheral (TIM1) in Bit Delay ##############*/
-  /* Initialize TIM1 peripheral as follow:
+  /*##-1- Configure  the Timer peripheral (TIM4) in Bit Delay ##############*/
+  /* Initialize TIM4 peripheral as follow:
   + Period = TimerPeriod 
   + Prescaler = 0
   + ClockDivision = 0
   + Counter direction = Up
   */
-  TimHandle.Instance            = TIM1;
+  TimHandle.Instance            = TIM4;
   TimHandle.Init.Prescaler      = 0;
   TimHandle.Init.ClockDivision  = 0;
   TimHandle.Init.CounterMode    = TIM_COUNTERMODE_UP;
@@ -339,14 +339,14 @@ static void SPI_Emul_SetConfig (SPI_Emul_HandleTypeDef *hspi)
   {
     sConfig1.OCPolarity   = TIM_OCPOLARITY_LOW;
 
-    if (hspi->Init.ClkPinNumber == GPIO_PIN_9)
-    {
-      (hspi_emul->ClkPortName)->PUPDR |= 0x00040000;
-    }
-    else /* hspi_emul->ClkPinName == GPIO_PIN_8 */
-    {
-      GPIOA->PUPDR |= 0x00010000;
-    }
+    //if (hspi->Init.ClkPinNumber == GPIO_PIN_13)
+    //{
+    //  (sspi->ClkPortName)->PUPDR |= 0x00040000;
+   // }
+    //else /* sspi->ClkPinName == GPIO_PIN_8 */
+    //{
+     // GPIOD->PUPDR |= 0x00010000;
+    //}
   }
   sConfig1.OCFastMode   = TIM_OCFAST_ENABLE;
   sConfig1.OCIdleState  = TIM_OCIDLESTATE_RESET;
@@ -387,51 +387,51 @@ static void SPI_Emul_SetConfig_DMATx(void)
 
   /*##-1- Configure  DMA For SPI Emulation TX #############################*/
   /* Set the parameters to be configured */
-  hdma_tx.Init.Channel              = DMA_CHANNEL_6;                /* DMA_CHANNEL_6                        */
-  hdma_tx.Init.Direction            = DMA_MEMORY_TO_PERIPH;         /* Transfer mode                        */
-  hdma_tx.Init.PeriphInc            = DMA_PINC_DISABLE;             /* Peripheral increment mode Disable    */
-  hdma_tx.Init.MemInc               = DMA_MINC_ENABLE;              /* Memory increment mode Enable         */
-  hdma_tx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD ;         /* Peripheral data alignment : Word     */
-  hdma_tx.Init.MemDataAlignment     = DMA_MDATAALIGN_WORD ;         /* memory data alignment :  Word        */
-  hdma_tx.Init.Mode                 = DMA_CIRCULAR;                 /* Circular DMA mode                    */
-  hdma_tx.Init.Priority             = DMA_PRIORITY_HIGH;            /* priority level : high                */
-  hdma_tx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;         /* FIFO mode disabled                   */
-  hdma_tx.Init.FIFOThreshold        = DMA_FIFO_THRESHOLD_FULL;      /* FIFO threshold full configuration    */
-  hdma_tx.Init.MemBurst             = DMA_MBURST_SINGLE;            /* Memory burst                         */
-  hdma_tx.Init.PeriphBurst          = DMA_PBURST_SINGLE;            /* Peripheral burst                     */
+  hdma_tim4_ch2.Init.Channel              = DMA_CHANNEL_1;                /* DMA_CHANNEL_6                        */
+  hdma_tim4_ch2.Init.Direction            = DMA_MEMORY_TO_PERIPH;         /* Transfer mode                        */
+  hdma_tim4_ch2.Init.PeriphInc            = DMA_PINC_DISABLE;             /* Peripheral increment mode Disable    */
+  hdma_tim4_ch2.Init.MemInc               = DMA_MINC_ENABLE;              /* Memory increment mode Enable         */
+  hdma_tim4_ch2.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD ;         /* Peripheral data alignment : Word     */
+  hdma_tim4_ch2.Init.MemDataAlignment     = DMA_MDATAALIGN_WORD ;         /* memory data alignment :  Word        */
+  hdma_tim4_ch2.Init.Mode                 = DMA_CIRCULAR;                 /* Circular DMA mode                    */
+  hdma_tim4_ch2.Init.Priority             = DMA_PRIORITY_HIGH;            /* priority level : high                */
+  hdma_tim4_ch2.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;         /* FIFO mode disabled                   */
+  hdma_tim4_ch2.Init.FIFOThreshold        = DMA_FIFO_THRESHOLD_FULL;      /* FIFO threshold full configuration    */
+  hdma_tim4_ch2.Init.MemBurst             = DMA_MBURST_SINGLE;            /* Memory burst                         */
+  hdma_tim4_ch2.Init.PeriphBurst          = DMA_PBURST_SINGLE;            /* Peripheral burst                     */
 
   /* Set hdma_tim instance */
-  hdma_tx.Instance = DMA2_Stream1;
-  hdma_tx.Parent = TimHandle.hdma[1];
+  hdma_tim4_ch2.Instance = DMA1_Stream3;
+  hdma_tim4_ch2.Parent = TimHandle.hdma[1];
 
   /* Link hdma_tim to hdma[ ] ( channel Tx or Rx) */
-  __HAL_LINKDMA(&TimHandle, hdma[1] , hdma_tx);
+  __HAL_LINKDMA(&TimHandle, hdma[1] , hdma_tim4_ch2);
 
   /* Initialize TIMx DMA handle */
   HAL_DMA_Init(TimHandle.hdma[1]);
 
   /*##-2- NVIC configuration for DMA transfer complete interrupt ###########*/
-  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
 
   /* Configure DMA Stream source and destination address */
-  hdma_tx.Instance->PAR =  (uint32_t) & ((hspi_emul->TxPortName)->BSRR);
-  hdma_tx.Instance->M0AR = (uint32_t)pBuffer_Tx;
+  hdma_tim4_ch2.Instance->PAR =  (uint32_t) & ((sspi->TxPortName)->BSRR);
+  hdma_tim4_ch2.Instance->M0AR = (uint32_t)pBuffer_Tx;
 
   /* Configure DMA Stream data length */
-  if ((hspi_emul->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (hspi_emul->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
+  if ((sspi->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (sspi->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
   {
-    hdma_tx.Instance->NDTR = NUMBER_OF_DATA_ITEMS;
+    hdma_tim4_ch2.Instance->NDTR = NUMBER_OF_DATA_ITEMS;
   }
   else
   {
-    if ((hspi_emul->TxXferSize) < 20)
+    if ((sspi->TxXferSize) < 20)
     {
-      hdma_tx.Instance->NDTR = 2 * (hspi_emul->TxXferSize) * (hspi_emul->Init.DataSize);
+      hdma_tim4_ch2.Instance->NDTR = 2 * (sspi->TxXferSize) * (sspi->Init.DataSize);
     }
     else
     {
-      hdma_tx.Instance->NDTR = NUMBER_OF_DATA_ITEMS / 2;
+      hdma_tim4_ch2.Instance->NDTR = NUMBER_OF_DATA_ITEMS / 2;
     }
   }
 }
@@ -481,13 +481,13 @@ HAL_StatusTypeDef HAL_SPI_Emul_Transmit_DMA(SPI_Emul_HandleTypeDef *hspi, uint8_
     /* Set the DMA error callback */
     TimHandle.hdma[TIM_DMA_ID_CC1]->XferErrorCallback = SPI_Emul_DMAError;
 
-    if ((hspi_emul->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (hspi_emul->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
+    if ((sspi->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (sspi->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
     {
       for (counter_format = 0; counter_format < 20; counter_format++)
       {
         pData_16bit = (pData[counter_shift+1] << ONE_BYTE) | pData[counter_shift];
         SPI_Emul_TransmitFormatFrame(hspi, pData_16bit, (uint32_t*)(pBuffer_Tx + counter_format*16));
-        hspi_emul->TxXferCount++;
+        sspi->TxXferCount++;
         counter_shift += 2;
       }
     }
@@ -496,7 +496,7 @@ HAL_StatusTypeDef HAL_SPI_Emul_Transmit_DMA(SPI_Emul_HandleTypeDef *hspi, uint8_
       for (counter_format = 0; counter_format < 20; counter_format++)
       {
         SPI_Emul_TransmitFormatFrame(hspi, *(pData + counter_format), (uint32_t*)(pBuffer_Tx + counter_format*8));
-        hspi_emul->TxXferCount++;
+        sspi->TxXferCount++;
       }
     }
 
@@ -519,13 +519,13 @@ static void SPI_Emul_EnableRessources(SPI_Emul_HandleTypeDef *hspi)
   if ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_RX))
   {
     /* Enable the transfer complete interrupt (Reception) */
-    __HAL_DMA_ENABLE_IT(&hdma_rx, DMA_IT_TC);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch1, DMA_IT_TC);
 
     /* Enable the transfer complete interrupt (Reception) */
-    __HAL_DMA_ENABLE_IT(&hdma_rx, DMA_IT_HT);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch1, DMA_IT_HT);
 
     /* Enable the transfer Error interrupt (Reception) */
-    __HAL_DMA_ENABLE_IT(&hdma_rx, DMA_IT_TE);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch1, DMA_IT_TE);
 
     /* Enable the TIM Update DMA request (Reception) */
     __HAL_TIM_ENABLE_DMA(&TimHandle, TIM_DMA_CC2);
@@ -533,13 +533,13 @@ static void SPI_Emul_EnableRessources(SPI_Emul_HandleTypeDef *hspi)
   if ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_TX))
   {
     /* Enable the transfer complete interrupt (Transmission) */
-    __HAL_DMA_ENABLE_IT(&hdma_tx, DMA_IT_TC);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch2, DMA_IT_TC);
 
     /* Enable the half transfer complete interrupt (Transmission) */
-    __HAL_DMA_ENABLE_IT(&hdma_tx, DMA_IT_HT);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch2, DMA_IT_HT);
 
     /* Enable the transfer Error interrupt (Transmission) */
-    __HAL_DMA_ENABLE_IT(&hdma_tx, DMA_IT_TE);
+    __HAL_DMA_ENABLE_IT(&hdma_tim4_ch2, DMA_IT_TE);
 
     /* Enable the TIM Update DMA request */
     __HAL_TIM_ENABLE_DMA(&TimHandle, TIM_DMA_CC1);
@@ -547,11 +547,11 @@ static void SPI_Emul_EnableRessources(SPI_Emul_HandleTypeDef *hspi)
   if ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_TX))
   {
     /* Enable the Peripheral */
-    __HAL_DMA_ENABLE(&hdma_tx);
+    __HAL_DMA_ENABLE(&hdma_tim4_ch2);
   }
   if ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_RX))
   {
-    __HAL_DMA_ENABLE(&hdma_rx);
+    __HAL_DMA_ENABLE(&hdma_tim4_ch1);
   }
   if ((hspi->Init.CLKPhase == SPI_EMUL_PHASE_1EDGE) && ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_RX)))
   {
@@ -560,10 +560,10 @@ static void SPI_Emul_EnableRessources(SPI_Emul_HandleTypeDef *hspi)
   if ((hspi->Init.Direction == SPI_EMUL_DIRECTION_TX_RX) || (hspi->Init.Direction == SPI_EMUL_DIRECTION_TX))
   {
     /* Enable the Capture compare channel */
-    TIM_CCxChannelCmd(TIM2, TIM_CHANNEL_1, TIM_CCx_ENABLE);
+    TIM_CCxChannelCmd(TIM4, TIM_CHANNEL_1, TIM_CCx_ENABLE);
     TIMx->EGR |= 0x002;
   }
-  TIM_CCxChannelCmd(TIM1, TIM_CHANNEL_2, TIM_CCx_ENABLE);
+  TIM_CCxChannelCmd(TIM4, TIM_CHANNEL_2, TIM_CCx_ENABLE);
 
   __HAL_TIM_MOE_ENABLE(&TimHandle);
 
@@ -582,55 +582,55 @@ static void SPI_Emul_DMATransmitCplt(DMA_HandleTypeDef *hdma)
   uint8_t pData_8bit = 0;
   uint16_t pData_16bit = 0;
   __IO uint32_t counter_format = 0;
-  uint32_t transfer_tx_size = hspi_emul->TxXferSize;
+  uint32_t transfer_tx_size = sspi->TxXferSize;
   uint32_t rest_transfer_tx = RestTx;
 
-  if ((hspi_emul->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (hspi_emul->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
+  if ((sspi->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (sspi->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
   {
-    if (hspi_emul->TxXferCount <= ((transfer_tx_size) - 10))
+    if (sspi->TxXferCount <= ((transfer_tx_size) - 10))
     {
       for (counter_format = 10; counter_format < 20; counter_format++)
       {
-        pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
+        pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
         pData_16bit = ((pData_8bit + 1) << ONE_BYTE) | pData_8bit;
-        SPI_Emul_TransmitFormatFrame(hspi_emul, pData_16bit, (uint32_t*)&pBuffer_Tx[counter_format*(hspi_emul->Init.DataSize)]);
-        hspi_emul->TxXferCount++;
+        SPI_Emul_TransmitFormatFrame(sspi, pData_16bit, (uint32_t*)&pBuffer_Tx[counter_format*(sspi->Init.DataSize)]);
+        sspi->TxXferCount++;
       }
     }
     else
     {
       SPI_Emul_Transmission_Process_Complete();
       /* Handle for SPI Emulation Transfer Complete */
-      HAL_SPI_Emul_TxCpltCallback(hspi_emul);
+      HAL_SPI_Emul_TxCpltCallback(sspi);
     }
   }
   else
   {
-    if ((hspi_emul->TxXferSize) < 20)
+    if ((sspi->TxXferSize) < 20)
     {
       SPI_Emul_Transmission_Process_Complete();
-      HAL_SPI_Emul_TxCpltCallback(hspi_emul);
+      HAL_SPI_Emul_TxCpltCallback(sspi);
     }
     else
     {
-      if (((hspi_emul->TxXferCount) + 10) <= (transfer_tx_size))
+      if (((sspi->TxXferCount) + 10) <= (transfer_tx_size))
       {
 
         for (counter_format = 10; counter_format < 20; counter_format++)
         {
-          pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
-          SPI_Emul_TransmitFormatFrame(hspi_emul, pData_8bit , (uint32_t*)&pBuffer_Tx[counter_format*8]);
+          pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
+          SPI_Emul_TransmitFormatFrame(sspi, pData_8bit , (uint32_t*)&pBuffer_Tx[counter_format*8]);
         }
       }
       else
       {
-        if ((hspi_emul->TxXferCount) <= (transfer_tx_size))
+        if ((sspi->TxXferCount) <= (transfer_tx_size))
         {
-          RestTx = (transfer_tx_size) - (hspi_emul->TxXferCount);
+          RestTx = (transfer_tx_size) - (sspi->TxXferCount);
           for (counter_format = 10; counter_format < rest_transfer_tx + 10; counter_format++)
           {
-            pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
-            SPI_Emul_TransmitFormatFrame(hspi_emul, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
+            pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
+            SPI_Emul_TransmitFormatFrame(sspi, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
           }
           LastTx = 1;
         }
@@ -640,7 +640,7 @@ static void SPI_Emul_DMATransmitCplt(DMA_HandleTypeDef *hdma)
           if (LastTx == 1)
           {
             SPI_Emul_Transmission_Process_Complete();
-            HAL_SPI_Emul_TxCpltCallback(hspi_emul);
+            HAL_SPI_Emul_TxCpltCallback(sspi);
             LastTx = 0;
           }
           else
@@ -666,47 +666,47 @@ static void SPI_Emul_DMAHalfTransmitCplt(DMA_HandleTypeDef *hdma)
   uint8_t pData_8bit = 0;
   uint16_t pData_16bit = 0;
   __IO uint32_t counter_format = 0;
-  uint32_t transfer_tx_size = hspi_emul->TxXferSize;
+  uint32_t transfer_tx_size = sspi->TxXferSize;
   uint32_t rest_transfer_tx = RestTx;
 
-  if ((hspi_emul->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (hspi_emul->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
+  if ((sspi->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (sspi->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
   {
-    if (hspi_emul->TxXferCount <= transfer_tx_size)
+    if (sspi->TxXferCount <= transfer_tx_size)
     {
       for (counter_format = 0; counter_format < 10; counter_format++)
       {
-        pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
+        pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
         pData_16bit = ((pData_8bit + 1) << ONE_BYTE) | pData_8bit;
-        SPI_Emul_TransmitFormatFrame(hspi_emul, pData_16bit , (uint32_t*)&pBuffer_Tx[counter_format*16]);
-        hspi_emul->TxXferCount++;
+        SPI_Emul_TransmitFormatFrame(sspi, pData_16bit , (uint32_t*)&pBuffer_Tx[counter_format*16]);
+        sspi->TxXferCount++;
       }
     }
     else
     {
       SPI_Emul_Transmission_Process_Complete();
-      HAL_SPI_Emul_TxHalfCpltCallback(hspi_emul);
+      HAL_SPI_Emul_TxHalfCpltCallback(sspi);
     }
   }
   else
   {
-    if (((hspi_emul->TxXferCount) + 10) <= (transfer_tx_size))
+    if (((sspi->TxXferCount) + 10) <= (transfer_tx_size))
     {
 
       for (counter_format = 0; counter_format < 10; counter_format++)
       {
-        pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
-        SPI_Emul_TransmitFormatFrame(hspi_emul, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
+        pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
+        SPI_Emul_TransmitFormatFrame(sspi, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
       }
     }
     else
     {
-      if (((hspi_emul->TxXferCount)) <= (transfer_tx_size))
+      if (((sspi->TxXferCount)) <= (transfer_tx_size))
       {
-        RestTx = ((transfer_tx_size) - (hspi_emul->TxXferCount));
+        RestTx = ((transfer_tx_size) - (sspi->TxXferCount));
         for (counter_format = 0; counter_format < rest_transfer_tx; counter_format++)
         {
-          pData_8bit = *(hspi_emul->pTxBuffPtr + (hspi_emul->TxXferCount++));
-          SPI_Emul_TransmitFormatFrame(hspi_emul, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
+          pData_8bit = *(sspi->pTxBuffPtr + (sspi->TxXferCount++));
+          SPI_Emul_TransmitFormatFrame(sspi, pData_8bit, (uint32_t*)&pBuffer_Tx[counter_format*8]);
         }
         LastTx = 1;
       }
@@ -715,7 +715,7 @@ static void SPI_Emul_DMAHalfTransmitCplt(DMA_HandleTypeDef *hdma)
         if (LastTx == 1)
         {
           SPI_Emul_Transmission_Process_Complete();
-          HAL_SPI_Emul_TxCpltCallback(hspi_emul);
+          HAL_SPI_Emul_TxCpltCallback(sspi);
           LastTx = 0;
         }
         else
@@ -740,37 +740,37 @@ static void SPI_Emul_Transmission_Process_Complete(void)
   __HAL_DMA_DISABLE_IT(TimHandle.hdma[TIM_DMA_ID_CC1], DMA_IT_HT);
   __HAL_DMA_DISABLE_IT(TimHandle.hdma[TIM_DMA_ID_CC1], DMA_IT_TC);
 
-  if (hspi_emul->Init.Direction == SPI_EMUL_DIRECTION_TX)
+  if (sspi->Init.Direction == SPI_EMUL_DIRECTION_TX)
   {
     /* Set TC flag in the SR registre software */
-    __HAL_SPI_EMUL_SET_FLAG(hspi_emul, SPI_EMUL_FLAG_TC);
+    __HAL_SPI_EMUL_SET_FLAG(sspi, SPI_EMUL_FLAG_TC);
   }
   /* De_Initialize counter frame for Tx */
-  hspi_emul->TxXferCount = 0;
+  sspi->TxXferCount = 0;
 
 
   /* Disable the Capture compare channel */
-  TIM_CCxChannelCmd(TIM2, TIM_CHANNEL_1, TIM_CCx_DISABLE);
+  TIM_CCxChannelCmd(TIM4, TIM_CHANNEL_1, TIM_CCx_DISABLE);
 
-  if ((hspi_emul->Init.Direction == SPI_EMUL_DIRECTION_TX) && (hspi_emul->Init.Mode == SPI_EMUL_MODE_MASTER))
+  if ((sspi->Init.Direction == SPI_EMUL_DIRECTION_TX) && (sspi->Init.Mode == SPI_EMUL_MODE_MASTER))
   {
-    TIM_CCxChannelCmd(TIM2, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+    TIM_CCxChannelCmd(TIM4, TIM_CHANNEL_2, TIM_CCx_DISABLE);
     __HAL_TIM_MOE_DISABLE(&TimHandle);
     __HAL_TIM_DISABLE(&TimHandle);
   }
   __HAL_DMA_DISABLE(TimHandle.hdma[TIM_DMA_ID_CC1]);
 
   /* Initialize the SPI Emulation state */
-  hspi_emul->ErrorCode = HAL_SPI_EMUL_ERROR_NONE;
+  sspi->ErrorCode = HAL_SPI_EMUL_ERROR_NONE;
 
   /* Check if a receive process is ongoing or not */
-  if (hspi_emul->State == HAL_SPI_EMUL_STATE_BUSY_TX_RX)
+  if (sspi->State == HAL_SPI_EMUL_STATE_BUSY_TX_RX)
   {
-    hspi_emul->State = HAL_SPI_EMUL_STATE_BUSY_RX;
+    sspi->State = HAL_SPI_EMUL_STATE_BUSY_RX;
   }
   else
   {
-    hspi_emul->State = HAL_SPI_EMUL_STATE_READY;
+    sspi->State = HAL_SPI_EMUL_STATE_READY;
   }
 }
 
@@ -839,16 +839,16 @@ static void SPI_Emul_TransmitFormatFrame(SPI_Emul_HandleTypeDef *hspi, uint16_t 
 */
 void SPI_EMUL_TX_DMA_IRQHandler(void)
 {
-  if ((IrqTx == 0) && (hspi_emul->TxXferSize > 20))
+  if ((IrqTx == 0) && (sspi->TxXferSize > 20))
   {
     TimHandle.hdma[TIM_DMA_ID_CC1]->XferHalfCpltCallback(TimHandle.hdma[TIM_DMA_ID_CC1]);
     __HAL_DMA_CLEAR_FLAG(TimHandle.hdma[TIM_DMA_ID_CC1], __HAL_DMA_GET_HT_FLAG_INDEX(TimHandle.hdma[TIM_DMA_ID_CC1]));
     IrqTx = 1;
     if (RestTx != 0x00)
     {
-      __HAL_DMA_DISABLE(&hdma_tx);
-      hdma_tx.Instance->NDTR = RestTx * (hspi_emul->Init.DataSize);
-      __HAL_DMA_ENABLE(&hdma_tx);
+      __HAL_DMA_DISABLE(&hdma_tim4_ch2);
+      hdma_tim4_ch2.Instance->NDTR = RestTx * (sspi->Init.DataSize);
+      __HAL_DMA_ENABLE(&hdma_tim4_ch2);
     }
   }
   /* Transfer complete callback */
@@ -877,11 +877,11 @@ HAL_SPI_Emul_StateTypeDef HAL_SPI_Emul_GetState(SPI_Emul_HandleTypeDef *hspi)
 static void SPI_Emul_DMAError(DMA_HandleTypeDef *hdma)
 {
   /* SPI Emulation frame error occurred */
-  __HAL_SPI_EMUL_SET_FLAG(hspi_emul, SPI_EMUL_FLAG_FE);
+  __HAL_SPI_EMUL_SET_FLAG(sspi, SPI_EMUL_FLAG_FE);
 
-  hspi_emul->ErrorCode |= HAL_SPI_EMUL_ERROR_FE;
+  sspi->ErrorCode |= HAL_SPI_EMUL_ERROR_FE;
 
-  HAL_SPI_Emul_ErrorCallback(hspi_emul);
+  HAL_SPI_Emul_ErrorCallback(sspi);
 }
 
 /**
@@ -983,46 +983,46 @@ static void SPI_Emul_SetConfig_DMARx(void)
 {
   /*##-1- Configure  DMA For SPI Emulation RX #############################*/
   /* Set the parameters to be configured */
-  hdma_rx.Init.Channel              = DMA_CHANNEL_6;                /* DMA_CHANNEL_6                        */
-  hdma_rx.Init.Direction            = DMA_PERIPH_TO_MEMORY;         /* Transfer mode                        */
-  hdma_rx.Init.PeriphInc            = DMA_PINC_DISABLE;             /* Peripheral increment mode Disable    */
-  hdma_rx.Init.MemInc               = DMA_MINC_ENABLE;              /* Memory increment mode Enable         */
-  hdma_rx.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD ;         /* Peripheral data alignment : Word     */
-  hdma_rx.Init.MemDataAlignment     = DMA_MDATAALIGN_WORD ;         /* memory data alignment :  Word        */
-  hdma_rx.Init.Mode                 = DMA_CIRCULAR;                 /* Circular DMA mode                    */
-  hdma_rx.Init.Priority             = DMA_PRIORITY_VERY_HIGH;       /* priority level : very high           */
-  hdma_rx.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;         /* FIFO mode disabled                   */
-  hdma_rx.Init.FIFOThreshold        = DMA_FIFO_THRESHOLD_FULL;      /* FIFO threshold full configuration    */
-  hdma_rx.Init.MemBurst             = DMA_MBURST_SINGLE;            /* Memory burst                         */
-  hdma_rx.Init.PeriphBurst          = DMA_PBURST_SINGLE;            /* Peripheral burst                     */
+  hdma_tim4_ch1.Init.Channel              = DMA_CHANNEL_1;                /* DMA_CHANNEL_6                        */
+  hdma_tim4_ch1.Init.Direction            = DMA_PERIPH_TO_MEMORY;         /* Transfer mode                        */
+  hdma_tim4_ch1.Init.PeriphInc            = DMA_PINC_DISABLE;             /* Peripheral increment mode Disable    */
+  hdma_tim4_ch1.Init.MemInc               = DMA_MINC_ENABLE;              /* Memory increment mode Enable         */
+  hdma_tim4_ch1.Init.PeriphDataAlignment  = DMA_PDATAALIGN_WORD ;         /* Peripheral data alignment : Word     */
+  hdma_tim4_ch1.Init.MemDataAlignment     = DMA_MDATAALIGN_WORD ;         /* memory data alignment :  Word        */
+  hdma_tim4_ch1.Init.Mode                 = DMA_CIRCULAR;                 /* Circular DMA mode                    */
+  hdma_tim4_ch1.Init.Priority             = DMA_PRIORITY_VERY_HIGH;       /* priority level : very high           */
+  hdma_tim4_ch1.Init.FIFOMode             = DMA_FIFOMODE_DISABLE;         /* FIFO mode disabled                   */
+  hdma_tim4_ch1.Init.FIFOThreshold        = DMA_FIFO_THRESHOLD_FULL;      /* FIFO threshold full configuration    */
+  hdma_tim4_ch1.Init.MemBurst             = DMA_MBURST_SINGLE;            /* Memory burst                         */
+  hdma_tim4_ch1.Init.PeriphBurst          = DMA_PBURST_SINGLE;            /* Peripheral burst                     */
 
   /* Set hdma_tim instance */
-  hdma_rx.Instance = DMA2_Stream2;
-  hdma_rx.Parent = TimHandle.hdma[2];
+  hdma_tim4_ch1.Instance = DMA1_Stream0;
+  hdma_tim4_ch1.Parent = TimHandle.hdma[2];
 
   /* Link hdma_tim to hdma[ ] ( channel Tx or Rx) */
-  __HAL_LINKDMA(&TimHandle, hdma[2] , hdma_rx);
+  __HAL_LINKDMA(&TimHandle, hdma[2] , hdma_tim4_ch1);
 
   /* Initialize TIMx DMA handle */
   HAL_DMA_Init(TimHandle.hdma[2]);
 
   /*##-2- NVIC configuration for DMA transfer complete interrupt ###########*/
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
 
 
   /* Configure DMA Stream source and destination address */
-  hdma_rx.Instance->PAR = (uint32_t) & ((hspi_emul->RxPortName)->IDR);
-  hdma_rx.Instance->M0AR  = (uint32_t)pBuffer_Rx;
+  hdma_tim4_ch1.Instance->PAR = (uint32_t) & ((sspi->RxPortName)->IDR);
+  hdma_tim4_ch1.Instance->M0AR  = (uint32_t)pBuffer_Rx;
 
   /* Configure DMA Stream data length */
-  if ((hspi_emul->RxXferSize) < 20)
+  if ((sspi->RxXferSize) < 20)
   {
-    hdma_rx.Instance->NDTR = 2 * (hspi_emul->RxXferSize) * (hspi_emul->Init.DataSize);
+    hdma_tim4_ch1.Instance->NDTR = 2 * (sspi->RxXferSize) * (sspi->Init.DataSize);
   }
   else
   {
-    hdma_rx.Instance->NDTR = 2 * 10 * (hspi_emul->Init.DataSize);
+    hdma_tim4_ch1.Instance->NDTR = 2 * 10 * (sspi->Init.DataSize);
   }
 }
 
@@ -1086,37 +1086,37 @@ HAL_StatusTypeDef HAL_SPI_Emul_Receive_DMA(SPI_Emul_HandleTypeDef *hspi, uint8_t
 static void SPI_Emul_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
 {
   uint32_t counter_format = 0;
-  uint32_t transfer_rx_size = hspi_emul->RxXferSize;
+  uint32_t transfer_rx_size = sspi->RxXferSize;
 
-  if ((hspi_emul->RxXferSize) < 20)
+  if ((sspi->RxXferSize) < 20)
   {
     SPI_Emul_Reception_Process_Complete();
-    for (counter_format = 0; counter_format < (hspi_emul->RxXferSize); counter_format++)
+    for (counter_format = 0; counter_format < (sspi->RxXferSize); counter_format++)
     {
-      hspi_emul->pRxBuffPtr[hspi_emul->RxXferCount] = SPI_Emul_ReceiveFormatFrame(hspi_emul, (uint32_t*) & pBuffer_Rx[(hspi_emul->Init.DataSize)*counter_format]);
-      hspi_emul->RxXferCount ++;
+      sspi->pRxBuffPtr[sspi->RxXferCount] = SPI_Emul_ReceiveFormatFrame(sspi, (uint32_t*) & pBuffer_Rx[(sspi->Init.DataSize)*counter_format]);
+      sspi->RxXferCount ++;
     }
 
-    HAL_SPI_Emul_RxHalfCpltCallback(hspi_emul);
+    HAL_SPI_Emul_RxHalfCpltCallback(sspi);
   }
 
   else
   {
-    if ((hspi_emul->RxXferCount + 10) <= (transfer_rx_size))
+    if ((sspi->RxXferCount + 10) <= (transfer_rx_size))
     {
       for (counter_format = (10); counter_format < (20); counter_format++)
       {
-        hspi_emul->pRxBuffPtr[hspi_emul->RxXferCount] = SPI_Emul_ReceiveFormatFrame(hspi_emul, (uint32_t*) & pBuffer_Rx[(hspi_emul->Init.DataSize)*counter_format]);
-        hspi_emul->RxXferCount ++;
+        sspi->pRxBuffPtr[sspi->RxXferCount] = SPI_Emul_ReceiveFormatFrame(sspi, (uint32_t*) & pBuffer_Rx[(sspi->Init.DataSize)*counter_format]);
+        sspi->RxXferCount ++;
       }
     }
-    else if ((hspi_emul->RxXferCount ) < (transfer_rx_size))
+    else if ((sspi->RxXferCount ) < (transfer_rx_size))
     {
-      RestRx = ((transfer_rx_size) - (hspi_emul->RxXferCount));
+      RestRx = ((transfer_rx_size) - (sspi->RxXferCount));
       for (counter_format = (10); counter_format < (RestRx + 10); counter_format++)
       {
-        hspi_emul->pRxBuffPtr[hspi_emul->RxXferCount] = SPI_Emul_ReceiveFormatFrame(hspi_emul, (uint32_t*) & pBuffer_Rx[(hspi_emul->Init.DataSize)*counter_format]);
-        hspi_emul->RxXferCount ++;
+        sspi->pRxBuffPtr[sspi->RxXferCount] = SPI_Emul_ReceiveFormatFrame(sspi, (uint32_t*) & pBuffer_Rx[(sspi->Init.DataSize)*counter_format]);
+        sspi->RxXferCount ++;
       }
     }
     else
@@ -1124,7 +1124,7 @@ static void SPI_Emul_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
       SPI_Emul_Reception_Process_Complete();
 
       /* Handle for SPI Emulation Transfer Complete */
-      HAL_SPI_Emul_RxCpltCallback(hspi_emul);
+      HAL_SPI_Emul_RxCpltCallback(sspi);
     }
   }
 }
@@ -1136,30 +1136,30 @@ static void SPI_Emul_DMAReceiveCplt(DMA_HandleTypeDef *hdma)
 static void SPI_Emul_DMAHalfReceiveCplt(DMA_HandleTypeDef *hdma)
 {
   uint8_t counter_format = 0;
-  uint32_t transfer_rx_size = hspi_emul->RxXferSize;
+  uint32_t transfer_rx_size = sspi->RxXferSize;
 
-  if ((hspi_emul->RxXferCount + 10) <= (transfer_rx_size))
+  if ((sspi->RxXferCount + 10) <= (transfer_rx_size))
   {
     for (counter_format = (0); counter_format < (10); counter_format++)
     {
-      hspi_emul->pRxBuffPtr[hspi_emul->RxXferCount] = SPI_Emul_ReceiveFormatFrame(hspi_emul, (uint32_t*) & pBuffer_Rx[(hspi_emul->Init.DataSize)*counter_format]);
-      hspi_emul->RxXferCount ++;
+      sspi->pRxBuffPtr[sspi->RxXferCount] = SPI_Emul_ReceiveFormatFrame(sspi, (uint32_t*) & pBuffer_Rx[(sspi->Init.DataSize)*counter_format]);
+      sspi->RxXferCount ++;
     }
   }
-  else if ((hspi_emul->RxXferCount) < (transfer_rx_size))
+  else if ((sspi->RxXferCount) < (transfer_rx_size))
   {
-    RestRx = ((transfer_rx_size) - (hspi_emul->RxXferCount));
+    RestRx = ((transfer_rx_size) - (sspi->RxXferCount));
     for (counter_format = (0); counter_format < (RestRx); counter_format++)
     {
-      hspi_emul->pRxBuffPtr[hspi_emul->RxXferCount] = SPI_Emul_ReceiveFormatFrame(hspi_emul, (uint32_t*) & pBuffer_Rx[(hspi_emul->Init.DataSize)*counter_format]);
-      hspi_emul->RxXferCount ++;
+      sspi->pRxBuffPtr[sspi->RxXferCount] = SPI_Emul_ReceiveFormatFrame(sspi, (uint32_t*) & pBuffer_Rx[(sspi->Init.DataSize)*counter_format]);
+      sspi->RxXferCount ++;
     }
   }
   else
   {
     SPI_Emul_Reception_Process_Complete();
 
-    HAL_SPI_Emul_RxHalfCpltCallback(hspi_emul);
+    HAL_SPI_Emul_RxHalfCpltCallback(sspi);
   }
 }
 
@@ -1175,29 +1175,29 @@ static void SPI_Emul_Reception_Process_Complete(void)
   __HAL_DMA_DISABLE_IT(TimHandle.hdma[TIM_DMA_ID_CC2], DMA_IT_TC);
 
   /* Set TC flag in the SR registre software */
-  __HAL_SPI_EMUL_SET_FLAG(hspi_emul, SPI_EMUL_FLAG_RC);
-  __HAL_SPI_EMUL_SET_FLAG(hspi_emul, SPI_EMUL_FLAG_TC);/////HALIM
+  __HAL_SPI_EMUL_SET_FLAG(sspi, SPI_EMUL_FLAG_RC);
+  __HAL_SPI_EMUL_SET_FLAG(sspi, SPI_EMUL_FLAG_TC);/////HALIM
 
 
   __HAL_DMA_DISABLE(TimHandle.hdma[TIM_DMA_ID_CC2]);
 
   /* Disable the Capture compare channel */
-  TIM_CCxChannelCmd(TIM1, TIM_CHANNEL_2, TIM_CCx_DISABLE);
+  TIM_CCxChannelCmd(TIM4, TIM_CHANNEL_2, TIM_CCx_DISABLE);
   __HAL_TIM_MOE_DISABLE(&TimHandle);
   __HAL_TIM_DISABLE(&TimHandle);
   __HAL_DMA_DISABLE(TimHandle.hdma[TIM_DMA_ID_CC2]);
 
   /* Initialize the SPI Emulation state */
-  hspi_emul->ErrorCode = HAL_SPI_EMUL_ERROR_NONE;
+  sspi->ErrorCode = HAL_SPI_EMUL_ERROR_NONE;
 
   /* Check if a receive process is ongoing or not */
-  if (hspi_emul->State == HAL_SPI_EMUL_STATE_BUSY_TX_RX)
+  if (sspi->State == HAL_SPI_EMUL_STATE_BUSY_TX_RX)
   {
-    hspi_emul->State = HAL_SPI_EMUL_STATE_BUSY_TX;
+    sspi->State = HAL_SPI_EMUL_STATE_BUSY_TX;
   }
   else
   {
-    hspi_emul->State = HAL_SPI_EMUL_STATE_READY;
+    sspi->State = HAL_SPI_EMUL_STATE_READY;
   }
 }
 
@@ -1254,16 +1254,16 @@ static uint32_t SPI_Emul_ReceiveFormatFrame(SPI_Emul_HandleTypeDef *hspi, uint32
 */
 void SPI_EMUL_RX_DMA_IRQHandler(void)
 {
-  if ((IrqRx == 0) && (hspi_emul->RxXferSize > 20))
+  if ((IrqRx == 0) && (sspi->RxXferSize > 20))
   {
     TimHandle.hdma[TIM_DMA_ID_CC2]->XferHalfCpltCallback(TimHandle.hdma[TIM_DMA_ID_CC2]);
     __HAL_DMA_CLEAR_FLAG(TimHandle.hdma[TIM_DMA_ID_CC2], __HAL_DMA_GET_HT_FLAG_INDEX(TimHandle.hdma[TIM_DMA_ID_CC2]));
     IrqRx = 1;
     if (RestRx != 0x00)
     {
-      __HAL_DMA_DISABLE(&hdma_rx);
-      hdma_rx.Instance->NDTR = RestRx * (hspi_emul->Init.DataSize);
-      __HAL_DMA_ENABLE(&hdma_rx);
+      __HAL_DMA_DISABLE(&hdma_tim4_ch1);
+      hdma_tim4_ch1.Instance->NDTR = RestRx * (sspi->Init.DataSize);
+      __HAL_DMA_ENABLE(&hdma_tim4_ch1);
     }
   }
   /* Transfer complete callback */
@@ -1274,9 +1274,9 @@ void SPI_EMUL_RX_DMA_IRQHandler(void)
     IrqRx = 0;
     if (RestRx != 0x00)
     {
-      __HAL_DMA_DISABLE(&hdma_rx);
-      hdma_rx.Instance->NDTR = RestRx * (hspi_emul->Init.DataSize);
-      __HAL_DMA_ENABLE(&hdma_rx);
+      __HAL_DMA_DISABLE(&hdma_tim4_ch1);
+      hdma_tim4_ch1.Instance->NDTR = RestRx * (sspi->Init.DataSize);
+      __HAL_DMA_ENABLE(&hdma_tim4_ch1);
     }
   }
 }
@@ -1374,13 +1374,13 @@ HAL_StatusTypeDef HAL_SPI_Emul_TransmitReceive_DMA(SPI_Emul_HandleTypeDef *hspi,
     /* Set the DMA error callback */
     TimHandle.hdma[TIM_DMA_ID_CC2]->XferErrorCallback = SPI_Emul_DMAError;
 
-    if ((hspi_emul->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (hspi_emul->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
+    if ((sspi->Init.FirstBit == SPI_EMUL_FIRSTBIT_MSB) && (sspi->Init.DataSize == SPI_EMUL_DATASIZE_16BIT))
     {
       for (counter_format = 0; counter_format < 20; counter_format++)
       {
         pData_16bit = (pTxData[counter_shift+1] << ONE_BYTE) | pTxData[counter_shift];
         SPI_Emul_TransmitFormatFrame(hspi, pData_16bit, (uint32_t*)(pBuffer_Tx + counter_format*16));
-        hspi_emul->TxXferCount++;
+        sspi->TxXferCount++;
         counter_shift += 2;
       }
     }
@@ -1391,7 +1391,7 @@ HAL_StatusTypeDef HAL_SPI_Emul_TransmitReceive_DMA(SPI_Emul_HandleTypeDef *hspi,
         for (counter_format = 0; counter_format < (hspi->TxXferSize); counter_format++)
         {
           SPI_Emul_TransmitFormatFrame(hspi, *(pTxData + counter_format), (uint32_t*)(pBuffer_Tx + counter_format*8));
-          hspi_emul->TxXferCount++;
+          sspi->TxXferCount++;
         }
       }
       else
@@ -1399,7 +1399,7 @@ HAL_StatusTypeDef HAL_SPI_Emul_TransmitReceive_DMA(SPI_Emul_HandleTypeDef *hspi,
         for (counter_format = 0; counter_format < 20; counter_format++)
         {
           SPI_Emul_TransmitFormatFrame(hspi, *(pTxData + counter_format), (uint32_t*)(pBuffer_Tx + counter_format*8));
-          hspi_emul->TxXferCount++;
+          sspi->TxXferCount++;
         }
 
       }

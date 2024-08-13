@@ -300,8 +300,8 @@ SPI_Emul_HandleTypeDef;
 
 
 /* Definition Handler for SPI Emulation transmit mode */
-#define SPI_EMUL_TX_DMA_IRQHandler           DMA2_Stream1_IRQHandler
-#define SPI_EMUL_RX_DMA_IRQHandler           DMA2_Stream2_IRQHandler
+#define SPI_EMUL_TX_DMA_IRQHandler           DMA1_Stream3_IRQHandler
+#define SPI_EMUL_RX_DMA_IRQHandler           DMA1_Stream0_IRQHandler
 
 
 /** @brief  Determinate the size for the frame .

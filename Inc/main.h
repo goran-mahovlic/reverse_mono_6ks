@@ -72,7 +72,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 #define COUNTOF(__BUFFER__)   (sizeof(__BUFFER__) / sizeof(*(__BUFFER__)))
 
-volatile uint8_t Touch_IRQ;
+volatile static uint8_t Touch_IRQ;
 
 #endif /* SPI_EMUL_MASTER_SIDE */
 
@@ -139,6 +139,8 @@ volatile uint8_t Touch_IRQ;
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -167,6 +169,8 @@ void Error_Handler(void);
 #define UV_LED_GPIO_Port GPIOG
 #define TS_CS_Pin GPIO_PIN_12
 #define TS_CS_GPIO_Port GPIOD
+#define TS_CLK_Pin GPIO_PIN_13
+#define TS_CLK_GPIO_Port GPIOD
 #define LCD_RST_Pin GPIO_PIN_2
 #define LCD_RST_GPIO_Port GPIOG
 #define TS_DOUT_Pin GPIO_PIN_3

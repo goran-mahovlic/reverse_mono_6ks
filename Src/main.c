@@ -59,12 +59,14 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 
+TIM_HandleTypeDef htim4;
 TIM_HandleTypeDef htim14;
+DMA_HandleTypeDef hdma_tim4_ch1;
+DMA_HandleTypeDef hdma_tim4_ch2;
 
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
-
 SRAM_HandleTypeDef hsram1;
 
 /* USER CODE BEGIN PV */
@@ -79,7 +81,7 @@ SPI_HandleTypeDef SpiHandle;
 #endif /*SPI_HW_SLAVE_SIDE */
 
 #ifdef SPI_EMUL_MASTER_SIDE
-extern SPI_Emul_HandleTypeDef sspi;
+static SPI_Emul_HandleTypeDef sspi;
 #endif /*SPI_EMUL_MASTER_SIDE */
 
 /* Buffer used for transmission */
@@ -102,6 +104,7 @@ static void MX_SPI1_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_TIM14_Init(void);
+static void MX_TIM4_Init(void);
 /* USER CODE BEGIN PFP */
  static void SPI_EMUL_Init(void);
 
@@ -157,6 +160,7 @@ int main(void)
   MX_USB_OTG_FS_HCD_Init();
   MX_RTC_Init();
   MX_TIM14_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   SPI_EMUL_Init();
   lv_init();
@@ -355,6 +359,71 @@ static void MX_SPI1_Init(void)
 }
 
 /**
+  * @brief TIM4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM4_Init(void)
+{
+
+  /* USER CODE BEGIN TIM4_Init 0 */
+
+  /* USER CODE END TIM4_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM4_Init 1 */
+
+  /* USER CODE END TIM4_Init 1 */
+  htim4.Instance = TIM4;
+  htim4.Init.Prescaler = 0;
+  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim4.Init.Period = 65535;
+  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_UPDATE;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 0;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_LOW;
+  sConfigOC.OCFastMode = TIM_OCFAST_ENABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM4_Init 2 */
+
+  /* USER CODE END TIM4_Init 2 */
+  HAL_TIM_MspPostInit(&htim4);
+
+}
+
+/**
   * @brief TIM14 Initialization Function
   * @param None
   * @retval None
@@ -440,6 +509,7 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
   hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
@@ -461,6 +531,12 @@ static void MX_DMA_Init(void)
   }
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream3_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -551,7 +627,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
@@ -573,8 +649,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(D1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_Pin LCD_BL_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_Pin|LCD_BL_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_BL_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_BL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -583,28 +659,28 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : TS_CS_Pin */
   GPIO_InitStruct.Pin = TS_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TS_CS_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : TS_DOUT_Pin FMC_A1_REAL_Pin */
+  GPIO_InitStruct.Pin = TS_DOUT_Pin|FMC_A1_REAL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TS_DIN_Pin */
   GPIO_InitStruct.Pin = TS_DIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(TS_DIN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TS_IRQ_Pin */
   GPIO_InitStruct.Pin = TS_IRQ_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TS_IRQ_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : FMC_A1_REAL_Pin */
-  GPIO_InitStruct.Pin = FMC_A1_REAL_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(FMC_A1_REAL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(TS_IRQ_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : PA9 */
   GPIO_InitStruct.Pin = GPIO_PIN_9;
@@ -650,12 +726,16 @@ static void SPI_EMUL_Init(){
     /* While the SPI Emulation in reception process, user can transmit data through
       "aTxBuffer" buffer */
 
-   // if (HAL_SPI_Emul_TransmitReceive_DMA(&sspi, (uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, TXBUFFERSIZE) != HAL_OK)
-   // {
-   //   Error_Handler();
-   // }
-   // while (__HAL_SPI_EMUL_GET_FLAG(&sspi, SPI_EMUL_FLAG_TC) != SET)
-   // {}
+    if (HAL_SPI_Emul_TransmitReceive_DMA(&sspi, (uint8_t*)aTxBuffer, (uint8_t*)aRxBuffer, TXBUFFERSIZE) != HAL_OK)
+    //if (HAL_SPI_Emul_Transmit_DMA(&sspi, (uint8_t*)aTxBuffer, TXBUFFERSIZE) != HAL_OK)
+    {
+      Error_Handler();
+    }
+    //__HAL_SPI_EMUL_SET_FLAG(&sspi, SPI_EMUL_FLAG_TC);
+    //while (__HAL_SPI_EMUL_GET_FLAG(&sspi, SPI_EMUL_FLAG_TC) != SET)
+    //{}
+    HAL_Delay(100);
+    
   #endif /* SPI_EMUL_MASTER_SIDE */
 
   #ifdef SPI_HW_SLAVE_SIDE
