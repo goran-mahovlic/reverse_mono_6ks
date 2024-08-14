@@ -21,6 +21,7 @@ extern "C" {
 #endif
 #endif
 #include "config.h"
+#include "softspi.h"
 #if USE_XPT2046
 
 #ifdef LV_LVGL_H_INCLUDE_SIMPLE
@@ -50,7 +51,7 @@ typedef enum {
  **********************/
 
 bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
-void XPT2046_init(SPI_HandleTypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height);
+void XPT2046_init(SoftSPI_TypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height);
 void xpt2046_lv_init(void);
 bool xpt2046_getXY(uint16_t* x, uint16_t* y);
 bool _xpt2046_getXY(void);

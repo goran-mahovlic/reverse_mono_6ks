@@ -11,6 +11,7 @@
 #include "main.h"
 #include "ILI9341_GFX.h"
 #include "ILI9341_STM32_Driver.h"
+
 #if USE_XPT2046
 
 #include <stddef.h>
@@ -20,8 +21,26 @@
 /*********************
  *      DEFINES
  *********************/
-#define CMD_X_READ  0b10010000
-#define CMD_Y_READ  0b11010000
+//#define CMD_X_READ  0b10010000
+//#define CMD_Y_READ  0b11010000
+
+#define SYSTICK_LOAD (SystemCoreClock/1000000U)
+#define SYSTICK_DELAY_CALIB (SYSTICK_LOAD >> 1)
+ 
+#define Delay_us(us) \
+    do { \
+         uint32_t start = SysTick->VAL; \
+         uint32_t ticks = (us * SYSTICK_LOAD)-SYSTICK_DELAY_CALIB;  \
+         while((start - SysTick->VAL) < ticks); \
+    } while (0)
+
+
+#define DELAY_MS(ms) \
+    do { \
+        for (uint32_t i = 0; i < ms; ++i) { \
+            Delay_us(1000); \
+        } \
+    } while (0)
 
 /**********************
  *      TYPEDEFS
@@ -30,7 +49,7 @@
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-
+static void StartSoftSPI(void);
 
 /**********************
  *  STATIC VARIABLES
@@ -39,22 +58,29 @@ int16_t avg_buf_x[XPT2046_AVG];
 int16_t avg_buf_y[XPT2046_AVG];
 uint8_t avg_last;
 
-     uint16_t last_x = 0;
-     uint16_t last_y = 0;
-     uint8_t last_state = 0;
-static SPI_HandleTypeDef *_spi;
-static SPI_HandleTypeDef hspi2;
-uint8_t isTouched = 0;
+uint32_t avg_x = 0;
+uint32_t avg_y = 0;
+uint32_t raw_x = 0;
+uint32_t raw_y = 0;
 
-//extern SPI_HandleTypeDef hspi2;
+
+volatile uint16_t last_x = 0;
+volatile uint16_t last_y = 0;
+uint16_t x = 0;
+uint16_t y = 0;
+uint8_t last_state = 0;
+uint8_t nsamples = 0;
+
+extern volatile uint8_t touchPressed;
+
+static SoftSPI_TypeDef soft_spi;
 
 /* Параметры ориентации */
 static touchOrienation _orient;
 static uint16_t _width, _height;
 
-static void _spi_init(void);
-static void _XPT2046_TouchSelect(void);
-static void _XPT2046_TouchUnselect(void);
+//static void _XPT2046_TouchSelect(void);
+//static void _XPT2046_TouchUnselect(void);
 /**********************
  *      MACROS
  **********************/
@@ -68,8 +94,17 @@ static void _XPT2046_TouchUnselect(void);
  */
 void xpt2046_lv_init(void)
 {
-    //XPT2046_init(_spi, XPT2046_LANDSCAPE, XPT2046_HOR_RES, XPT2046_VER_RES);
-    XPT2046_init(&hspi2, XPT2046_LANDSCAPE, XPT2046_HOR_RES, XPT2046_VER_RES);
+    XPT2046_init(&soft_spi, XPT2046_LANDSCAPE, XPT2046_HOR_RES, XPT2046_VER_RES);
+/*
+for (int i=0;i<4;i++){
+  HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_SET);
+  DELAY_MS(1000);
+  HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_RESET);
+  DELAY_MS(1000);
+}
+*/
+
+
 }
 
 /**
@@ -79,90 +114,130 @@ void xpt2046_lv_init(void)
  */
 #define READ_X 0x90
 #define READ_Y 0xD0
-	static const uint8_t _cmd_read_x[] = {READ_X};
-	static const uint8_t _cmd_read_y[] = {READ_Y};
-	static const uint8_t _zeroes_tx[] = {0x00, 0x00};
+//static const uint8_t _cmd_read_x[] = {READ_X};
+//static const uint8_t _cmd_read_y[] = {READ_Y};
+//static const uint8_t _zeroes_tx[] = {0x00, 0x00};
 
-    static void _XPT2046_TouchSelect(void)
-{
-    HAL_GPIO_WritePin(XPT2046_CS_GPIO_Port, XPT2046_CS_Pin, GPIO_PIN_RESET);
-}
+    //static void _XPT2046_TouchSelect(void)
+// {
+   // HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
+// }
 
-static void _XPT2046_TouchUnselect(void)
-{
-    HAL_GPIO_WritePin(XPT2046_CS_GPIO_Port, XPT2046_CS_Pin, GPIO_PIN_SET);
+//static void _XPT2046_TouchUnselect(void)
+//{
+    //HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_SET);
+//}
+
+static void StartSoftSPI(void){
+
+  soft_spi.SCLK_GPIO=TS_CLK_GPIO_Port;
+  soft_spi.SCLK_Pin=TS_CLK_Pin;
+
+  //soft_spi.MISO_GPIO=D1_GPIO_Port;
+  //soft_spi.MISO_Pin=D1_Pin;
+
+  soft_spi.MOSI_GPIO=TS_DIN_GPIO_Port;
+  soft_spi.MOSI_Pin=TS_DIN_Pin;
+
+  soft_spi.MISO_GPIO=TS_DOUT_GPIO_Port;
+  soft_spi.MISO_Pin=TS_DOUT_Pin;
+
+  soft_spi.SS_GPIO=TS_CS_GPIO_Port;
+  soft_spi.SS_Pin=TS_CS_Pin;
+
+
+
+  soft_spi.Delay_Time=5;
+
+  SoftSPI_Init(&soft_spi);
+
+  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_SET);
+  DELAY_MS(10);
+  HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
+  DELAY_MS(10);
 }
-void XPT2046_init(SPI_HandleTypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height) {
-	_spi = spi;
+void XPT2046_init(SoftSPI_TypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height) {
+    StartSoftSPI();
+
 	_orient = orientation;
 	_width = width;
 	_height = height;
 }
 
-bool XPT2046_TouchPressed(void)
-{
-    return HAL_GPIO_ReadPin(TS_IRQ_GPIO_Port, TS_IRQ_Pin) == GPIO_PIN_RESET;
-}
+//bool XPT2046_TouchPressed(void)
+//{
+   // return touchPressed;
+//}
 //XPT2046_AVG
 bool xpt2046_getXY(uint16_t* x, uint16_t* y)
 {
-    last_state = LV_INDEV_STATE_PR;
-            	//Если включен контроль скорости SPI, то сохранение параметров и установка правильных значений
-	#ifdef XPT2046_SPI_PARAM_CONTROL
-	SPI_HandleTypeDef old_spi =  *_spi;//Сохранение старых параметров SPI
-	_spi_init(); //Инициализация с правильными параметрами
-	#endif
-        _XPT2046_TouchSelect();
-
-            //HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);    
+    //last_state = LV_INDEV_STATE_PR;
+    //_XPT2046_TouchSelect();
    
-    uint32_t avg_x = 0;
-    uint32_t avg_y = 0;
-    uint8_t nsamples = 0;
-
+    nsamples = 0;
+    avg_x = 0;
+    avg_y = 0;
     for(uint8_t i = 0; i < XPT2046_AVG; i++)
     {
-        if(!XPT2046_TouchPressed())
-        {
-            last_state = LV_INDEV_STATE_REL;
-            break;
-        }
-            
-
+        
+        //if(!XPT2046_TouchPressed())
+       // if(!touchPressed)
+       // {
+       //    last_state = LV_INDEV_STATE_REL;
+            //touchPressed = false;
+       //     break;
+       // }
+        
         nsamples++;
-
-        HAL_SPI_Transmit(_spi, (uint8_t*)_cmd_read_y, sizeof(_cmd_read_y), HAL_MAX_DELAY);
+        uint16_t y_raw;
+        uint16_t x_raw;        
+        HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
+        x_raw = readSPI(READ_X);
+        y_raw = readSPI(READ_Y);
+        HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_SET);
+        
+        avg_x += x_raw; //(((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
+        avg_y += y_raw; //(((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
+        DELAY_MS(1);
+       /*
+        nsamples++;
         uint8_t y_raw[2];
-        HAL_SPI_TransmitReceive(_spi, (uint8_t*)_zeroes_tx, y_raw, sizeof(y_raw), HAL_MAX_DELAY);
-
-        HAL_SPI_Transmit(_spi, (uint8_t*)_cmd_read_x, sizeof(_cmd_read_x), HAL_MAX_DELAY);
+        SoftSPI_SetSS(&soft_spi);
+        SoftSPI_WriteBuffer(&soft_spi, (uint8_t*)_cmd_read_y,sizeof(_cmd_read_y));
+        //SoftSPI_SetSS(&soft_spi);
+        DELAY_MS(1);
+        //SoftSPI_ClrSS(&soft_spi);
+        SoftSPI_WriteReadBuff(&soft_spi, (uint8_t*)_zeroes_tx, y_raw, sizeof(y_raw));
+        SoftSPI_ClrSS(&soft_spi);
+        DELAY_MS(1);
         uint8_t x_raw[2];
-        HAL_SPI_TransmitReceive(_spi, (uint8_t*)_zeroes_tx, x_raw, sizeof(x_raw), HAL_MAX_DELAY);
-
+        SoftSPI_SetSS(&soft_spi);
+        SoftSPI_WriteBuffer(&soft_spi, (uint8_t*)_cmd_read_x,sizeof(_cmd_read_x));
+        //SoftSPI_SetSS(&soft_spi);
+        DELAY_MS(1);
+        //SoftSPI_ClrSS(&soft_spi);
+        SoftSPI_WriteReadBuff(&soft_spi, (uint8_t*)_zeroes_tx, x_raw, sizeof(x_raw));
+        SoftSPI_ClrSS(&soft_spi);
+        DELAY_MS(1);
         avg_x += (((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
         avg_y += (((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
+        */
     }
 
-    _XPT2046_TouchUnselect();
-
-        	//Восстановление старых параметров
-            
-	#ifdef XPT2046_SPI_PARAM_CONTROL
-	*_spi = old_spi; 
-	//Инициализация с старыми параметрами
-  if (HAL_SPI_Init(_spi) != HAL_OK) Error_Handler();
-	#endif  
+    //_XPT2046_TouchUnselect();
 
     if(nsamples < XPT2046_AVG)
     {
         return false;
     }
 
-    uint32_t raw_x = (avg_x / XPT2046_AVG);
+    raw_x = (avg_x / XPT2046_AVG);
+    raw_y = (avg_y / XPT2046_AVG);
+
     if(raw_x <  XPT2046_X_MIN) raw_x = XPT2046_X_MIN;
     if(raw_x >  XPT2046_X_MAX) raw_x = XPT2046_X_MAX;
 
-    uint32_t raw_y = (avg_y / XPT2046_AVG);
+    raw_y = (avg_y / XPT2046_AVG);
     if(raw_y < XPT2046_Y_MIN) raw_y = XPT2046_Y_MIN;
     if(raw_y > XPT2046_Y_MAX) raw_y = XPT2046_Y_MAX;
 
@@ -181,16 +256,9 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
     #if XPT2046_Y_INV != 0
         (*y) =  XPT2046_VER_RES - (*y);
     #endif
- //   HAL_NVIC_DisableIRQ(CTP_INT_IRQn);
    last_x = (*x);
-    last_y = (*y);
-   //  ILI9341_Draw_Filled_Circle(last_x - 1, last_y - 1, 2, RED);
-    
-  //  HAL_NVIC_EnableIRQ(CTP_INT_IRQn);
-    
+   last_y = (*y);
 
-
-   // last_state = LV_INDEV_STATE_PR;
     return true;
 
 }
@@ -198,44 +266,31 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
 
 bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
-         if(!XPT2046_TouchPressed() )
-         {
-           last_state = LV_INDEV_STATE_REL;
-         }  
-    int16_t x = 0;
-    int16_t y = 0;
+    
+    //if(!XPT2046_TouchPressed() )
+    if(!touchPressed)
+    {
+    last_state = LV_INDEV_STATE_RELEASED;
+    } 
+    else{
 
-        x = last_x;
-        y = last_y;
+    xpt2046_getXY(&x, &y);
+    //x = last_x;
+    //y = last_y;
 
     data->point.x = (lv_coord_t)x;
     data->point.y = (lv_coord_t)y;
-    data->state = last_state;// ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+    data->state = LV_INDEV_STATE_PRESSED;// ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+
+    touchPressed = false;
+ 
 
     return false;
+    }
 }
 
-#ifdef XPT2046_SPI_PARAM_CONTROL
-static void _spi_init(void) {
-  _spi->Instance = SPI2;
-  _spi->Init.Mode = SPI_MODE_MASTER;
-  _spi->Init.Direction = SPI_DIRECTION_2LINES;
-  _spi->Init.DataSize = SPI_DATASIZE_8BIT;
-  _spi->Init.CLKPolarity = SPI_POLARITY_LOW;
-  _spi->Init.CLKPhase = SPI_PHASE_1EDGE;
-  _spi->Init.NSS = SPI_NSS_SOFT;
-	//Делитель частоты SPI. Установите безопасное значение в XPT2046.h
-  _spi->Init.BaudRatePrescaler = XPT2046_SPI_PRESCALER;
-  _spi->Init.FirstBit = SPI_FIRSTBIT_MSB;
-  _spi->Init.TIMode = SPI_TIMODE_DISABLE;
-  _spi->Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
-  _spi->Init.CRCPolynomial = 10;
-  if (HAL_SPI_Init(_spi) != HAL_OK) Error_Handler();
-}
 #endif
 
 /**********************
  *   STATIC FUNCTIONS
  **********************/
-
-#endif

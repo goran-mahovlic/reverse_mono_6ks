@@ -70,8 +70,8 @@ SRAM_HandleTypeDef hsram1;
   extern int16_t last_y;
   extern uint8_t last_state;
   */
-  extern uint8_t isTouched;
-  uint16_t x = 0, y = 0;
+ //volatile uint8_t touchPressed = false;
+  
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -477,10 +477,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DIN_Pin|LCD_BL_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_REAL_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FMC_A1_REAL_GPIO_Port, FMC_A1_REAL_Pin, GPIO_PIN_SET);
@@ -496,28 +496,35 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pin = D1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(D1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin TS_DOUT_REAL_Pin LCD_BL_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|TS_DOUT_REAL_Pin|LCD_BL_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_BL_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_BL_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TS_CS_Pin TS_CLK_REAL_Pin */
-  GPIO_InitStruct.Pin = TS_CS_Pin|TS_CLK_REAL_Pin;
+  /*Configure GPIO pins : TS_CS_Pin TS_CLK_Pin */
+  GPIO_InitStruct.Pin = TS_CS_Pin|TS_CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TS_DIN_REAL_Pin */
-  GPIO_InitStruct.Pin = TS_DIN_REAL_Pin;
+  /*Configure GPIO pin : TS_DOUT_Pin */
+  GPIO_InitStruct.Pin = TS_DOUT_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(TS_DIN_REAL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(TS_DOUT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TS_DIN_Pin */
+  GPIO_InitStruct.Pin = TS_DIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(TS_DIN_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TS_IRQ_Pin */
   GPIO_InitStruct.Pin = TS_IRQ_Pin;

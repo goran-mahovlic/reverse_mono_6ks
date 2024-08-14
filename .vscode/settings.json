@@ -12,6 +12,7 @@
         "lvgl.h": "c",
         "ili9341_stm32_driver.h": "c",
         "ui.h": "c",
-        "time.h": "c"
+        "time.h": "c",
+        "softspi.h": "c"
     }
 }

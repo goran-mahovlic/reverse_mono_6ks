@@ -54,7 +54,8 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+volatile uint8_t touchPressed;
+//uint16_t x , y;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -78,14 +79,14 @@ void Error_Handler(void);
 #define UV_LED_GPIO_Port GPIOG
 #define TS_CS_Pin GPIO_PIN_12
 #define TS_CS_GPIO_Port GPIOD
-#define TS_CLK_REAL_Pin GPIO_PIN_13
-#define TS_CLK_REAL_GPIO_Port GPIOD
+#define TS_CLK_Pin GPIO_PIN_13
+#define TS_CLK_GPIO_Port GPIOD
 #define LCD_RST_Pin GPIO_PIN_2
 #define LCD_RST_GPIO_Port GPIOG
-#define TS_DOUT_REAL_Pin GPIO_PIN_3
-#define TS_DOUT_REAL_GPIO_Port GPIOG
-#define TS_DIN_REAL_Pin GPIO_PIN_4
-#define TS_DIN_REAL_GPIO_Port GPIOG
+#define TS_DOUT_Pin GPIO_PIN_3
+#define TS_DOUT_GPIO_Port GPIOG
+#define TS_DIN_Pin GPIO_PIN_4
+#define TS_DIN_GPIO_Port GPIOG
 #define TS_IRQ_Pin GPIO_PIN_6
 #define TS_IRQ_GPIO_Port GPIOG
 #define TS_IRQ_EXTI_IRQn EXTI9_5_IRQn
