@@ -39,7 +39,6 @@ void create_screen_main() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             lv_obj_set_pos(obj, 0, 0);
             lv_obj_set_size(obj, 480, 320);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0xff8eb9ec), LV_PART_MAIN | LV_STATE_DEFAULT);
             {
                 lv_obj_t *parent_obj = obj;
                 {
@@ -87,7 +86,6 @@ void create_screen_page_1() {
             lv_obj_t *obj = lv_obj_create(parent_obj);
             lv_obj_set_pos(obj, 0, -1);
             lv_obj_set_size(obj, 480, 321);
-            lv_obj_set_style_bg_color(obj, lv_color_hex(0xff8eb9ec), LV_PART_MAIN | LV_STATE_DEFAULT);
             {
                 lv_obj_t *parent_obj = obj;
                 {

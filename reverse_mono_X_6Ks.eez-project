@@ -294,14 +294,7 @@
               "disabledStateType": "literal",
               "states": "",
               "localStyles": {
-                "objID": "c0ba3623-a2e7-4668-ca9a-7c497300c6f9",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#8eb9ec"
-                    }
-                  }
-                }
+                "objID": "c0ba3623-a2e7-4668-ca9a-7c497300c6f9"
               }
             }
           ],
@@ -662,14 +655,7 @@
               "disabledStateType": "literal",
               "states": "",
               "localStyles": {
-                "objID": "4e3cbe17-8515-4fbd-9ceb-1a67fc5836ff",
-                "definition": {
-                  "MAIN": {
-                    "DEFAULT": {
-                      "bg_color": "#8eb9ec"
-                    }
-                  }
-                }
+                "objID": "4e3cbe17-8515-4fbd-9ceb-1a67fc5836ff"
               }
             }
           ],
