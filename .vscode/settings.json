@@ -13,6 +13,7 @@
         "ili9341_stm32_driver.h": "c",
         "ui.h": "c",
         "time.h": "c",
-        "softspi.h": "c"
+        "softspi.h": "c",
+        "accelstepper.h": "c"
     }
 }

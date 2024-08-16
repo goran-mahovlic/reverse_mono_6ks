@@ -32,7 +32,7 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "AccelStepper.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -59,14 +59,18 @@ volatile uint8_t touchPressed;
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define MOTOR_PIN1_Pin GPIO_PIN_3
-#define MOTOR_PIN1_GPIO_Port GPIOE
-#define MOTOR_PIN2_Pin GPIO_PIN_4
-#define MOTOR_PIN2_GPIO_Port GPIOE
-#define MOTOR_PIN3_Pin GPIO_PIN_5
-#define MOTOR_PIN3_GPIO_Port GPIOE
+#define MOTOR_ENABLE_Pin GPIO_PIN_3
+#define MOTOR_ENABLE_GPIO_Port GPIOE
+#define MOTOR_DIR_Pin GPIO_PIN_4
+#define MOTOR_DIR_GPIO_Port GPIOE
+#define MOTOR_STEP_Pin GPIO_PIN_5
+#define MOTOR_STEP_GPIO_Port GPIOE
 #define D1_Pin GPIO_PIN_0
 #define D1_GPIO_Port GPIOF
+#define HOME_SW_Pin GPIO_PIN_3
+#define HOME_SW_GPIO_Port GPIOC
+#define FAN_Pin GPIO_PIN_3
+#define FAN_GPIO_Port GPIOA
 #define FLASH_CS_Pin GPIO_PIN_4
 #define FLASH_CS_GPIO_Port GPIOA
 #define FLASH_SCK_Pin GPIO_PIN_5
@@ -77,6 +81,14 @@ volatile uint8_t touchPressed;
 #define FLASH_MOSI_GPIO_Port GPIOA
 #define UV_LED_Pin GPIO_PIN_0
 #define UV_LED_GPIO_Port GPIOG
+#define LCD_NSS_Pin GPIO_PIN_12
+#define LCD_NSS_GPIO_Port GPIOB
+#define LCD_SCK_Pin GPIO_PIN_13
+#define LCD_SCK_GPIO_Port GPIOB
+#define LCD_MISO_Pin GPIO_PIN_14
+#define LCD_MISO_GPIO_Port GPIOB
+#define LCD_MOSI_Pin GPIO_PIN_15
+#define LCD_MOSI_GPIO_Port GPIOB
 #define TS_CS_Pin GPIO_PIN_12
 #define TS_CS_GPIO_Port GPIOD
 #define TS_CLK_Pin GPIO_PIN_13
@@ -94,6 +106,16 @@ volatile uint8_t touchPressed;
 #define FMC_A1_REAL_GPIO_Port GPIOG
 #define LCD_BL_Pin GPIO_PIN_8
 #define LCD_BL_GPIO_Port GPIOG
+#define MOTOR_M0_Pin GPIO_PIN_10
+#define MOTOR_M0_GPIO_Port GPIOG
+#define MOTOR_DEC1_Pin GPIO_PIN_11
+#define MOTOR_DEC1_GPIO_Port GPIOG
+#define MOTOR_DEC0_Pin GPIO_PIN_12
+#define MOTOR_DEC0_GPIO_Port GPIOG
+#define MOTOR_M1_Pin GPIO_PIN_13
+#define MOTOR_M1_GPIO_Port GPIOG
+#define MOTOR_nSLEEP_Pin GPIO_PIN_14
+#define MOTOR_nSLEEP_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

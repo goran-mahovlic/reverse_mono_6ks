@@ -322,12 +322,12 @@ ILI9341_Write_Command(0x2C);
 /*HARDWARE RESET*/
 void ILI9341_Reset(void)
 {
-	HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_RESET);
-	ILI9341_Write_Command(0x01); //only software for blackboard
+	//HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_RESET);
+	//ILI9341_Write_Command(0x01); //only software for blackboard
 	// 
 
-	lcdDelay(500);
-	HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_SET);
+	//lcdDelay(500);
+	//HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_SET);
 	
 HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
 //lcdDelay(200);
@@ -610,7 +610,7 @@ ILI9341_Write_Command(0x29);
 
 //STARTING ROTATION
 ILI9341_Set_Rotation(SCREEN_HORIZONTAL_2);
-ILI9341_Fill_Screen(BLACK);
+ILI9341_Fill_Screen(BLUE);
 
 LV_tft_init();
 //ILI9341_Set_Address(0, 0, 240, 320);

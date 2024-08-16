@@ -5,6 +5,16 @@
 #include "stm32f4xx_hal.h"
 
 
+#define SYSTICK_LOAD (SystemCoreClock/1000000U)
+#define SYSTICK_DELAY_CALIB (SYSTICK_LOAD >> 1)
+ 
+#define Delay_us(us) \
+    do { \
+         uint32_t start = SysTick->VAL; \
+         uint32_t ticks = (us * SYSTICK_LOAD)-SYSTICK_DELAY_CALIB;  \
+         while((start - SysTick->VAL) < ticks); \
+    } while (0)
+
 //CHIP SELECT PIN AND PORT, STANDARD GPIO
 #define LCD_CS_PORT								GPIOC
 #define LCD_CS_PIN								CS_Pin

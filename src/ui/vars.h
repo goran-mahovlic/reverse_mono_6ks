@@ -20,6 +20,10 @@ enum FlowGlobalVariables {
 
 // Native global variables
 
+extern int32_t get_var_motor_speed();
+extern void set_var_motor_speed(int32_t value);
+extern const char *get_var_current_operation();
+extern void set_var_current_operation(const char *value);
 
 
 #ifdef __cplusplus
