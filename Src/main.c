@@ -59,6 +59,7 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
+SPI_HandleTypeDef hspi3;
 
 HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
@@ -72,7 +73,10 @@ SRAM_HandleTypeDef hsram1;
   extern uint8_t last_state;
   */
  //volatile uint8_t touchPressed = false;
-volatile uint32_t motorSpeed = 5000;
+volatile uint32_t motorSpeed = 40000;
+volatile uint32_t ZPosition = 10000;
+volatile uint32_t maxPosition = 20000;
+bool initialHomeZ = false;
 Stepper_t stepperZ;
 int32_t get_var_motor_speed();
 void set_var_motor_speed(int32_t value);
@@ -80,11 +84,24 @@ void action_move_down(lv_event_t * e);
 void action_move_up(lv_event_t * e);
 void action_home_z(lv_event_t * e);
 void action_middle_z(lv_event_t * e);
+void action_lcd(lv_event_t * e);
+bool get_var_intial_home_z();
+void set_var_intial_home_z(bool value);
+int32_t get_var_current_position();
+void set_var_current_position(int32_t value);
 const char *get_var_current_operation();
 void set_var_current_operation(const char *value);
 char currentOP[200] = "Idle";
-
-
+uint8_t lcdStartDrawing[1] = { 0xFB };
+uint8_t lcd_black[2] = { 0x00, 0xFF };
+uint8_t lcd_white[2] = { 0x00, 0x00 };
+uint8_t readID[1] = { 0xF0 };
+uint8_t spiTX[2] = { 0x00 };
+uint8_t spiRX[2] = { 0x00 };
+void readInput();
+void LCD_readID();
+void FANoff();
+void LCD_reset();
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,12 +114,125 @@ static void MX_SPI1_Init(void);
 static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI2_Init(void);
+static void MX_SPI3_Init(void);
 /* USER CODE BEGIN PFP */
 int _gettimeofday( struct timeval *tv, void *tzvp )
 {
     // you can add code here there many example in google search.
     return 0;  // return non-zero for error
 } // end _gettimeofday()
+
+/* Just some function that I randomly found - It is mentioning Exposuring so maybe that could be some pointer
+
+void FUN_000194b0(int param_1)
+
+{
+  int iVar1;
+  
+  FUN_00018eb0(0xd,0,0xfe,0x100,0x18);
+  if (param_1 == 1) {
+    iVar1 = DAT_00019520;
+    if (*(char *)(iVar1 + 0x14) == '\0') {
+      FUN_0000b834(0x38,0x101,&DAT_00019524,0xffe0);
+    }
+    else {
+      FUN_0000b734(0x24,0xfe,s_Exposuring_00019534,0xffe0);
+    }
+  }
+  else {
+    FUN_00018e80(0xd);
+    iVar1 = DAT_00019520;
+    if (*(char *)(iVar1 + 0x14) == '\0') {
+      FUN_0000b834(0x51,0x101,&DAT_00019540,0xffe0);
+    }
+    else {
+      FUN_0000b734(0x56,0xfe,&DAT_0001954c,0xffe0);
+    }
+  }
+  return;
+}
+
+
+*/
+
+void LCD_readID(){
+ // for (uint8_t i=0;i<256;i++){
+    HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
+    HAL_Delay(10);
+    HAL_SPI_Transmit(&hspi3, readID, 1, 50);
+    HAL_Delay(60);
+    HAL_SPI_Receive(&hspi3, spiRX, 2, 100);
+    HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
+    HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+  //  spiTX[1]++;
+    //HAL_Delay(100);
+  //  if(spiRX[0]!=0x00){
+  //    break;
+  //  }
+  //  if(spiRX[1]!=0x00){
+  //    break;
+  //  }
+ // }
+    HAL_Delay(500);
+}
+
+void readInput(){
+  //F11, F12, F13, F14, F15
+
+ // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF11_GPIO_Port,PF11_Pin));
+ // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF12_GPIO_Port,PF12_Pin));
+ // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF13_GPIO_Port,PF13_Pin));
+ // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF14_GPIO_Port,PF14_Pin));
+ // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF15_GPIO_Port,PF15_Pin));
+
+  //HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
+  //HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
+  //HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
+  //HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
+}
+
+void LCD_panel_half_black()
+{
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 1000);
+  HAL_Delay(60);
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);  
+  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+  HAL_Delay(6000);
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 100);
+  int i=0;
+  int j=0;
+  for (i = 0; i < 5760; ++i){
+    for (j = 0; j < 3600; ++j){
+      if (j<1800){
+        HAL_SPI_Transmit(&hspi3, lcd_white, 2, 100); // Pixel data
+      }
+      else{
+        HAL_SPI_Transmit(&hspi3, lcd_black, 2, 100); // Pixel data     
+        }
+      }
+  }
+  HAL_Delay(60);
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+  }
+
+bool get_var_intial_home_z(){
+  return initialHomeZ;
+}
+void set_var_intial_home_z(bool value){
+  initialHomeZ = value;
+}
 
 const char *get_var_current_operation(){
 return currentOP;
@@ -111,36 +241,81 @@ void set_var_current_operation(const char *value){
 //*currentOP = &value;
 }
 
+int32_t get_var_current_position(){
+  return ZPosition;
+}
+void set_var_current_position(int32_t value){
+  ZPosition = value;
+}
+
 int32_t get_var_motor_speed(){
   return motorSpeed;
+}
+
+void FANoff(){
+  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
 }
 
 void set_var_motor_speed(int32_t value){
   motorSpeed = value;
 	setMaxSpeed(&stepperZ, motorSpeed);
 	setSpeed(&stepperZ, motorSpeed);
-	setAcceleration(&stepperZ, motorSpeed);  
+	setAcceleration(&stepperZ, motorSpeed/5);  
 }
 
 void action_move_down(lv_event_t * e){
   strcpy(currentOP, "Move DOWN");
-  runToNewPosition(&stepperZ,10000-5000);
+  ZPosition = ZPosition - 1000;
+  if (ZPosition >= 200){
+    runToNewPosition(&stepperZ,ZPosition);
+  }
 }
 void action_move_up(lv_event_t * e){
   strcpy(currentOP, "Move UP");
-  runToNewPosition(&stepperZ,10000+5000);
+  if (ZPosition < 20000){
+    ZPosition = ZPosition + 1000;
+    runToNewPosition(&stepperZ,ZPosition);
+  }
 }
 void action_home_z(lv_event_t * e){
   strcpy(currentOP, "HOME Z");
+	moveTo(&stepperZ, -20000);  
+  while (HAL_GPIO_ReadPin(HOME_SW_GPIO_Port,HOME_SW_Pin)){
+    //ZPosition = -200;
+    run(&stepperZ);
+  }
+  ZPosition = 0;
+  setCurrentPosition(&stepperZ,0);
+  initialHomeZ = true;
 }
 void action_middle_z(lv_event_t * e){
   strcpy(currentOP, "MIDDLE Z");
-  runToNewPosition(&stepperZ,10000);
+  ZPosition = 10000;
+  runToNewPosition(&stepperZ,ZPosition);
 }
 
-void Init64Microstepping(void){
-HAL_GPIO_WritePin(MOTOR_M0_GPIO_Port,MOTOR_M0_Pin,GPIO_PIN_SET);
-HAL_GPIO_WritePin(MOTOR_M1_GPIO_Port,MOTOR_M1_Pin,GPIO_PIN_SET);
+void LCD_reset(){
+  HAL_GPIO_WritePin(LCD_RST_GPIO_Port,LCD_RST_Pin, GPIO_PIN_RESET);
+  HAL_Delay(100);
+  HAL_GPIO_WritePin(LCD_RST_GPIO_Port,LCD_RST_Pin, GPIO_PIN_SET);
+  // FPGA BOOT TIME?
+  HAL_Delay(3000);
+}
+
+void action_lcd(lv_event_t * e){
+  LCD_reset();
+  LCD_readID();
+  LCD_panel_half_black();
+}
+
+void InitFullStep(void){
+HAL_GPIO_WritePin(MOTOR_M0_GPIO_Port,MOTOR_M0_Pin,GPIO_PIN_RESET);
+HAL_GPIO_WritePin(MOTOR_M1_GPIO_Port,MOTOR_M1_Pin,GPIO_PIN_RESET);
+}
+
+void InitSmartTuneDynamicDecay(){
+HAL_GPIO_WritePin(MOTOR_DEC0_GPIO_Port,MOTOR_DEC0_Pin,GPIO_PIN_RESET);
+HAL_GPIO_WritePin(MOTOR_DEC1_GPIO_Port,MOTOR_DEC1_Pin,GPIO_PIN_RESET);
 }
 
 void InitSlowDecay(){
@@ -149,17 +324,16 @@ HAL_GPIO_WritePin(MOTOR_DEC1_GPIO_Port,MOTOR_DEC1_Pin,GPIO_PIN_SET);
 }
 
 void motor_init(){
-  Init64Microstepping();
-  InitSlowDecay();
+  InitFullStep();
+  InitSmartTuneDynamicDecay();
 	/*##-3- Initialize X axis stepper. ###*/
   InitStepper(&stepperZ, DRIVER, MOTOR_STEP_Pin, MOTOR_STEP_GPIO_Port, MOTOR_DIR_Pin, MOTOR_DIR_GPIO_Port,1);
 	setMaxSpeed(&stepperZ, motorSpeed);
 	setSpeed(&stepperZ, motorSpeed);
 	setAcceleration(&stepperZ, motorSpeed);
-	//moveTo(&stepperZ, 1);
   setEnablePin(&stepperZ, MOTOR_ENABLE_Pin, MOTOR_ENABLE_GPIO_Port);
 	enableOutputs(&stepperZ);
-  setCurrentPosition(&stepperZ,1000);
+  setCurrentPosition(&stepperZ,ZPosition);
 }
 
 
@@ -206,8 +380,17 @@ int main(void)
   MX_USB_OTG_FS_HCD_Init();
   MX_RTC_Init();
   MX_SPI2_Init();
+  MX_SPI3_Init();
   /* USER CODE BEGIN 2 */
-  motor_init();
+  //motor_init();
+
+  FANoff();
+
+  readInput();
+
+  LCD_reset();
+  LCD_readID();
+
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
@@ -426,7 +609,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -438,6 +621,44 @@ static void MX_SPI2_Init(void)
   /* USER CODE BEGIN SPI2_Init 2 */
 
   /* USER CODE END SPI2_Init 2 */
+
+}
+
+/**
+  * @brief SPI3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI3_Init(void)
+{
+
+  /* USER CODE BEGIN SPI3_Init 0 */
+
+  /* USER CODE END SPI3_Init 0 */
+
+  /* USER CODE BEGIN SPI3_Init 1 */
+
+  /* USER CODE END SPI3_Init 1 */
+  /* SPI3 parameter configuration*/
+  hspi3.Instance = SPI3;
+  hspi3.Init.Mode = SPI_MODE_MASTER;
+  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi3.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi3.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI3_Init 2 */
+
+  /* USER CODE END SPI3_Init 2 */
 
 }
 
@@ -594,14 +815,20 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(FAN_GPIO_Port, FAN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RST_Pin|TS_DIN_Pin|MOTOR_M0_Pin
+  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RSTG2_Pin|TS_DIN_Pin|MOTOR_M0_Pin
                           |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, LCD_RST_Pin|FMC_A1_REAL_Pin|LCD_BL_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, FMC_A1_REAL_Pin|LCD_BL_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port, LCD_PB10_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port, LCD_PB11_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : MOTOR_ENABLE_Pin MOTOR_DIR_Pin MOTOR_STEP_Pin */
   GPIO_InitStruct.Pin = MOTOR_ENABLE_Pin|MOTOR_DIR_Pin|MOTOR_STEP_Pin;
@@ -630,14 +857,23 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(FAN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_BL_Pin MOTOR_M0_Pin
-                           MOTOR_DEC1_Pin MOTOR_DEC0_Pin MOTOR_M1_Pin MOTOR_nSLEEP_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_BL_Pin|MOTOR_M0_Pin
-                          |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_RSTG2_Pin LCD_BL_Pin
+                           MOTOR_M0_Pin MOTOR_DEC1_Pin MOTOR_DEC0_Pin MOTOR_M1_Pin
+                           MOTOR_nSLEEP_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_RSTG2_Pin|LCD_BL_Pin
+                          |MOTOR_M0_Pin|MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin
+                          |MOTOR_nSLEEP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LCD_PB10_Pin LCD_PB11_Pin */
+  GPIO_InitStruct.Pin = LCD_PB10_Pin|LCD_PB11_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : TS_CS_Pin TS_CLK_Pin */
   GPIO_InitStruct.Pin = TS_CS_Pin|TS_CLK_Pin;

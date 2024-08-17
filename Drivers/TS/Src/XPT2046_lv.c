@@ -281,10 +281,9 @@ bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
     data->point.x = (lv_coord_t)x;
     data->point.y = (lv_coord_t)y;
     data->state = LV_INDEV_STATE_PRESSED;// ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-
-    touchPressed = false;
- 
-
+    if(HAL_GPIO_ReadPin(TS_IRQ_GPIO_Port,TS_IRQ_Pin)){
+        touchPressed = false;
+    }
     return false;
     }
 }

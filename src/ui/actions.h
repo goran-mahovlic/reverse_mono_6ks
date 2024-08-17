@@ -11,6 +11,7 @@ extern void action_move_up(lv_event_t * e);
 extern void action_move_down(lv_event_t * e);
 extern void action_home_z(lv_event_t * e);
 extern void action_middle_z(lv_event_t * e);
+extern void action_lcd(lv_event_t * e);
 
 
 #ifdef __cplusplus

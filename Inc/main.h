@@ -81,8 +81,14 @@ volatile uint8_t touchPressed;
 #define FLASH_MOSI_GPIO_Port GPIOA
 #define UV_LED_Pin GPIO_PIN_0
 #define UV_LED_GPIO_Port GPIOG
-#define LCD_NSS_Pin GPIO_PIN_12
-#define LCD_NSS_GPIO_Port GPIOB
+#define LCD_RST_Pin GPIO_PIN_1
+#define LCD_RST_GPIO_Port GPIOG
+#define LCD_PB10_Pin GPIO_PIN_10
+#define LCD_PB10_GPIO_Port GPIOB
+#define LCD_PB11_Pin GPIO_PIN_11
+#define LCD_PB11_GPIO_Port GPIOB
+#define LCD_NSS_OLD_Pin GPIO_PIN_12
+#define LCD_NSS_OLD_GPIO_Port GPIOB
 #define LCD_SCK_Pin GPIO_PIN_13
 #define LCD_SCK_GPIO_Port GPIOB
 #define LCD_MISO_Pin GPIO_PIN_14
@@ -93,8 +99,8 @@ volatile uint8_t touchPressed;
 #define TS_CS_GPIO_Port GPIOD
 #define TS_CLK_Pin GPIO_PIN_13
 #define TS_CLK_GPIO_Port GPIOD
-#define LCD_RST_Pin GPIO_PIN_2
-#define LCD_RST_GPIO_Port GPIOG
+#define LCD_RSTG2_Pin GPIO_PIN_2
+#define LCD_RSTG2_GPIO_Port GPIOG
 #define TS_DOUT_Pin GPIO_PIN_3
 #define TS_DOUT_GPIO_Port GPIOG
 #define TS_DIN_Pin GPIO_PIN_4
@@ -106,6 +112,8 @@ volatile uint8_t touchPressed;
 #define FMC_A1_REAL_GPIO_Port GPIOG
 #define LCD_BL_Pin GPIO_PIN_8
 #define LCD_BL_GPIO_Port GPIOG
+#define LCD_NSS_Pin GPIO_PIN_15
+#define LCD_NSS_GPIO_Port GPIOA
 #define MOTOR_M0_Pin GPIO_PIN_10
 #define MOTOR_M0_GPIO_Port GPIOG
 #define MOTOR_DEC1_Pin GPIO_PIN_11
