@@ -96,12 +96,14 @@ uint8_t lcdStartDrawing[1] = { 0xFB };
 uint8_t lcd_black[2] = { 0x00, 0xFF };
 uint8_t lcd_white[2] = { 0x00, 0x00 };
 uint8_t readID[1] = { 0xF0 };
-uint8_t spiTX[2] = { 0x00 };
-uint8_t spiRX[2] = { 0x00 };
+uint8_t spiTX[2] = { 0x00, 0x00 };
+uint8_t spiRX[4] = { 0x00 , 0x00, 0x00, 0x00 };
+uint8_t fv[4] = { 0x00 };
 void readInput();
 void LCD_readID();
 void FANoff();
 void LCD_reset();
+void LCD_sendReceive(uint8_t command);
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -156,23 +158,54 @@ void FUN_000194b0(int param_1)
 
 */
 
+void LCD_sendReceive(uint8_t command){
+    spiTX[0] = command;
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+    HAL_Delay(10);
+    HAL_SPI_TransmitReceive(&hspi3, spiTX, spiRX, 1, 50);    HAL_Delay(60);
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+    HAL_Delay(10);
+}
+
+void LCD_init(){
+LCD_sendReceive(0x00);
+LCD_sendReceive(0xf1);
+LCD_sendReceive(0x00);
+LCD_sendReceive(0x00);
+LCD_sendReceive(0x8c);
+LCD_sendReceive(0x80);
+LCD_sendReceive(0x8f);
+LCD_sendReceive(0x97);
+LCD_sendReceive(0xac);
+LCD_sendReceive(0xb3);
+LCD_sendReceive(0xc5);
+LCD_sendReceive(0xc7);
+LCD_sendReceive(0xd0);
+LCD_sendReceive(0xdb);
+LCD_sendReceive(0xde);
+LCD_sendReceive(0xf1);
+LCD_sendReceive(0xf7);
+LCD_sendReceive(0xff);
+LCD_sendReceive(0xff);
+HAL_SPI_Receive(&hspi3, spiRX, 1, 100);
+HAL_Delay(50);
+spiTX[0] = 0xFB;
+HAL_SPI_Transmit(&hspi3, spiTX, 1, 50);
+HAL_Delay(50);
+}
+
 void LCD_readID(){
- // for (uint8_t i=0;i<256;i++){
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+    HAL_Delay(10);
+    HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);    HAL_Delay(60);
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+    HAL_Delay(10);
     HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
     HAL_Delay(10);
     HAL_SPI_Transmit(&hspi3, readID, 1, 50);
     HAL_Delay(60);
-    HAL_SPI_Receive(&hspi3, spiRX, 2, 100);
+    HAL_SPI_Receive(&hspi3, spiRX, 4, 100);
     HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-  //  spiTX[1]++;
-    //HAL_Delay(100);
-  //  if(spiRX[0]!=0x00){
-  //    break;
-  //  }
-  //  if(spiRX[1]!=0x00){
-  //    break;
-  //  }
- // }
     HAL_Delay(500);
 }
 
@@ -195,17 +228,23 @@ void LCD_panel_half_black()
 {
   HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
   HAL_Delay(10);
-  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 1000);
+  HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);
   HAL_Delay(60);
   HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-  HAL_Delay(6000);
+  HAL_Delay(10);  
+  //HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+  //HAL_Delay(10);
+  //HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 1000);
+  //HAL_Delay(60);
+  //HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+  //HAL_Delay(6000);
   HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 100);
+  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 1, 100);
   int i=0;
   int j=0;
   for (i = 0; i < 5760; ++i){
     for (j = 0; j < 3600; ++j){
-      if (j<1800){
+      if (i<500){
         HAL_SPI_Transmit(&hspi3, lcd_white, 2, 100); // Pixel data
       }
       else{
@@ -295,6 +334,7 @@ void LCD_reset(){
 void action_lcd(lv_event_t * e){
   LCD_reset();
   LCD_readID();
+  LCD_init();
   LCD_panel_half_black();
 }
 
