@@ -19,6 +19,8 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
+#include "usb_host.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -60,8 +62,6 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi3;
-
-HCD_HandleTypeDef hhcd_USB_OTG_FS;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 SRAM_HandleTypeDef hsram1;
@@ -111,10 +111,11 @@ static void MX_DMA_Init(void);
 static void MX_RNG_Init(void);
 static void MX_FMC_Init(void);
 static void MX_SPI1_Init(void);
-static void MX_USB_OTG_FS_HCD_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI3_Init(void);
+void MX_USB_HOST_Process(void);
+
 /* USER CODE BEGIN PFP */
 int _gettimeofday( struct timeval *tv, void *tzvp )
 {
@@ -157,14 +158,12 @@ void FUN_000194b0(int param_1)
 
 void LCD_readID(){
  // for (uint8_t i=0;i<256;i++){
-    HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
     HAL_Delay(10);
     HAL_SPI_Transmit(&hspi3, readID, 1, 50);
     HAL_Delay(60);
     HAL_SPI_Receive(&hspi3, spiRX, 2, 100);
-    HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
-    HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
   //  spiTX[1]++;
     //HAL_Delay(100);
   //  if(spiRX[0]!=0x00){
@@ -194,20 +193,13 @@ void readInput(){
 
 void LCD_panel_half_black()
 {
-  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
   HAL_Delay(10);
   HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 1000);
   HAL_Delay(60);
-  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);  
-  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
   HAL_Delay(6000);
-  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_RESET);
-  HAL_Delay(10);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
   HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 100);
   int i=0;
   int j=0;
@@ -222,9 +214,7 @@ void LCD_panel_half_black()
       }
   }
   HAL_Delay(60);
-  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
-  HAL_GPIO_WritePin(LCD_NSS_GPIO_Port,LCD_NSS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
   }
 
 bool get_var_intial_home_z(){
@@ -377,20 +367,17 @@ int main(void)
   MX_RNG_Init();
   MX_FMC_Init();
   MX_SPI1_Init();
-  MX_USB_OTG_FS_HCD_Init();
   MX_RTC_Init();
   MX_SPI2_Init();
   MX_SPI3_Init();
+  MX_FATFS_Init();
+  MX_USB_HOST_Init();
   /* USER CODE BEGIN 2 */
   //motor_init();
-
   FANoff();
-
   readInput();
-
-  LCD_reset();
-  LCD_readID();
-
+  //LCD_reset();
+  //LCD_readID();
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
@@ -434,6 +421,7 @@ int main(void)
     lcd_random_lines();
   #endif
     /* USER CODE END WHILE */
+    MX_USB_HOST_Process();
 
     /* USER CODE BEGIN 3 */
 
@@ -609,7 +597,7 @@ static void MX_SPI2_Init(void)
   hspi2.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi2.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi2.Init.NSS = SPI_NSS_HARD_OUTPUT;
-  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+  hspi2.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi2.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi2.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi2.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -646,7 +634,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
-  hspi3.Init.NSS = SPI_NSS_HARD_OUTPUT;
+  hspi3.Init.NSS = SPI_NSS_SOFT;
   hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
@@ -659,37 +647,6 @@ static void MX_SPI3_Init(void)
   /* USER CODE BEGIN SPI3_Init 2 */
 
   /* USER CODE END SPI3_Init 2 */
-
-}
-
-/**
-  * @brief USB_OTG_FS Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_USB_OTG_FS_HCD_Init(void)
-{
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 0 */
-
-  /* USER CODE END USB_OTG_FS_Init 0 */
-
-  /* USER CODE BEGIN USB_OTG_FS_Init 1 */
-
-  /* USER CODE END USB_OTG_FS_Init 1 */
-  hhcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hhcd_USB_OTG_FS.Init.Host_channels = 8;
-  hhcd_USB_OTG_FS.Init.speed = HCD_SPEED_FULL;
-  hhcd_USB_OTG_FS.Init.dma_enable = DISABLE;
-  hhcd_USB_OTG_FS.Init.phy_itface = HCD_PHY_EMBEDDED;
-  hhcd_USB_OTG_FS.Init.Sof_enable = DISABLE;
-  if (HAL_HCD_Init(&hhcd_USB_OTG_FS) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN USB_OTG_FS_Init 2 */
-
-  /* USER CODE END USB_OTG_FS_Init 2 */
 
 }
 
@@ -816,7 +773,8 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RSTG2_Pin|TS_DIN_Pin|MOTOR_M0_Pin
-                          |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin, GPIO_PIN_RESET);
+                          |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin
+                          |SPI3_NSS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOG, LCD_RST_Pin|FMC_A1_REAL_Pin|LCD_BL_Pin, GPIO_PIN_SET);
@@ -901,12 +859,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(TS_IRQ_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : FMC_A1_REAL_Pin */
-  GPIO_InitStruct.Pin = FMC_A1_REAL_Pin;
+  /*Configure GPIO pins : FMC_A1_REAL_Pin SPI3_NSS_Pin */
+  GPIO_InitStruct.Pin = FMC_A1_REAL_Pin|SPI3_NSS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(FMC_A1_REAL_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);

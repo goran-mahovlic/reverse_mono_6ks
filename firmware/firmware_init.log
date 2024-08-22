@@ -1,0 +1,325 @@
+# D1 INIT
+# D1 - PF0 - LED - PULL-UP
+
+# SPI1 INIT
+# FLASH - PA4 - CS - PULL-UP
+# FLASH - PA5 - CLK 
+# FLASH - PA6 - MISO
+# FLASH - PA7 - MOSI
+
+[clk=00350922 pc=0x08000fe4] TRACE GPIOF PF0 mode=output
+[clk=00350923 pc=0x08000fe6] TRACE GPIOF PF0 input_cfg=pull-up
+[clk=00351078 pc=0x08001028] TRACE GPIOF PF0 speed=high
+[clk=00351083 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00351369 pc=0x08000ec0] TRACE GPIOA PA5 alternate_cfg=AF5
+[clk=00351369 pc=0x08000ec0] TRACE GPIOA PA6 alternate_cfg=AF5
+[clk=00351369 pc=0x08000ec0] TRACE GPIOA PA7 alternate_cfg=AF5
+[clk=00351557 pc=0x08000fe4] TRACE GPIOA PA5 mode=alternate
+[clk=00351557 pc=0x08000fe4] TRACE GPIOA PA6 mode=alternate
+[clk=00351557 pc=0x08000fe4] TRACE GPIOA PA7 mode=alternate
+[clk=00351720 pc=0x08001028] TRACE GPIOA PA5 speed=high
+[clk=00351720 pc=0x08001028] TRACE GPIOA PA7 speed=high
+[clk=00351879 pc=0x08000fe4] TRACE GPIOA PA4 mode=output
+[clk=00351880 pc=0x08000fe6] TRACE GPIOA PA4 input_cfg=pull-up
+[clk=00352035 pc=0x08001028] TRACE GPIOA PA4 speed=high
+[clk=00352040 pc=0x08000eca] TRACE GPIOA PA4 output=1
+
+# READING WRITING FLASH
+
+# ReadDeviceID
+
+[clk=00352101 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00352110 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadDeviceID args=[] reply=Data([00, aa, bb, cc])
+[clk=00352110 pc=0x08001998] TRACE SPI1 spi-flash write=90
+[clk=00352127 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352139 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352168 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352180 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352209 pc=0x08001992] TRACE SPI1 spi-flash read=aa
+[clk=00352221 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352250 pc=0x08001992] TRACE SPI1 spi-flash read=bb
+[clk=00352262 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352291 pc=0x08001992] TRACE SPI1 spi-flash read=cc
+[clk=00352304 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352333 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352342 pc=0x08000eca] TRACE GPIOA PA4 output=1
+[clk=00352365 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00352374 pc=0x08001998] TRACE SPI1 spi-flash write=03
+[clk=00352403 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352415 pc=0x08001998] TRACE SPI1 spi-flash write=ef
+[clk=00352444 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352456 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352485 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352497 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadData args=[ef, 00, 00] reply=FileContent(ef0000)
+[clk=00352497 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352526 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00352542 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352571 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352588 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352617 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352634 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352663 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352680 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352709 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352722 pc=0x08000eca] TRACE GPIOA PA4 output=1
+[clk=00352742 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00352751 pc=0x08001998] TRACE SPI1 spi-flash write=03
+[clk=00352780 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352792 pc=0x08001998] TRACE SPI1 spi-flash write=ef
+[clk=00352821 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352833 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352862 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352874 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadData args=[ef, 00, 00] reply=FileContent(ef0000)
+[clk=00352874 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00352903 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352919 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352948 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00352965 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00352994 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353011 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353040 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353057 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353086 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353099 pc=0x08000eca] TRACE GPIOA PA4 output=1
+[clk=00353119 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00353128 pc=0x08001998] TRACE SPI1 spi-flash write=03
+[clk=00353157 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353169 pc=0x08001998] TRACE SPI1 spi-flash write=ef
+[clk=00353198 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353210 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00353239 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353251 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadData args=[ef, 00, 00] reply=FileContent(ef0000)
+[clk=00353251 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00353280 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353296 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353325 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353342 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353371 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353388 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353417 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353434 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353463 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353476 pc=0x08000eca] TRACE GPIOA PA4 output=1
+[clk=00353496 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00353505 pc=0x08001998] TRACE SPI1 spi-flash write=03
+[clk=00353534 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353546 pc=0x08001998] TRACE SPI1 spi-flash write=ef
+[clk=00353575 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353587 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00353616 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353628 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadData args=[ef, 00, 00] reply=FileContent(ef0000)
+[clk=00353628 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00353657 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353673 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353702 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353719 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353748 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353765 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353794 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353811 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00353840 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353853 pc=0x08000eca] TRACE GPIOA PA4 output=1
+[clk=00353875 pc=0x08000ec6] WARN  GPIO invalid offset=0x00000028
+[clk=00353884 pc=0x08001998] TRACE SPI1 spi-flash write=03
+[clk=00353913 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353925 pc=0x08001998] TRACE SPI1 spi-flash write=ef
+[clk=00353954 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00353966 pc=0x08001998] TRACE SPI1 spi-flash write=10
+[clk=00353995 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00354007 pc=0x08001998] DEBUG SPI1 spi-flash cmd=ReadData args=[ef, 10, 00] reply=FileContent(ef1000)
+[clk=00354007 pc=0x08001998] TRACE SPI1 spi-flash write=00
+[clk=00354036 pc=0x08001992] TRACE SPI1 spi-flash read=ff
+[clk=00354052 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00354081 pc=0x08001992] TRACE SPI1 spi-flash read=31
+[clk=00354098 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00354127 pc=0x08001992] TRACE SPI1 spi-flash read=30
+[clk=00354144 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00354173 pc=0x08001992] TRACE SPI1 spi-flash read=30
+[clk=00354190 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00354219 pc=0x08001992] TRACE SPI1 spi-flash read=37
+[clk=00354236 pc=0x08001998] TRACE SPI1 spi-flash write=ff
+[clk=00354265 pc=0x08001992] TRACE SPI1 spi-flash read=00
+[clk=00354278 pc=0x08000eca] TRACE GPIOA PA4 output=1
+
+# FAN INIT
+# FAN - PA3 - FAN
+
+[clk=00791894 pc=0x0801d25c] TRACE GPIOA PA3 mode=output
+[clk=00791895 pc=0x0801d25e] TRACE GPIOA PA3 input_cfg=pull-up
+[clk=00792050 pc=0x0801d2a0] TRACE GPIOA PA3 speed=high
+
+# UV_LED PG0 - PULL-UP
+
+[clk=00792209 pc=0x0801d25c] TRACE GPIOG PG0 mode=output
+[clk=00792210 pc=0x0801d25e] TRACE GPIOG PG0 input_cfg=pull-up
+[clk=00792365 pc=0x0801d2a0] TRACE GPIOG PG0 speed=high
+[clk=00792719 pc=0x0801d13c] WARN  GPIO invalid offset=0x00000028
+
+PF1 - OUTPUT ?  - I am using it for FMC PULL-UP
+
+[clk=00792891 pc=0x0801d25c] TRACE GPIOF PF1 mode=output
+[clk=00792892 pc=0x0801d25e] TRACE GPIOF PF1 input_cfg=pull-up
+[clk=00793047 pc=0x0801d2a0] TRACE GPIOF PF1 speed=high
+[clk=00793052 pc=0x0801d13c] WARN  GPIO invalid offset=0x00000028
+
+PA2 - OUTPUT ? I am not using it
+
+[clk=00793211 pc=0x0801d25c] TRACE GPIOA PA2 mode=output
+[clk=00793212 pc=0x0801d25e] TRACE GPIOA PA2 input_cfg=pull-up
+[clk=00793367 pc=0x0801d2a0] TRACE GPIOA PA2 speed=high
+
+# Turn off D1
+
+[clk=00793378 pc=0x0801d140] TRACE GPIOF PF0 output=1
+
+# Read FLASH
+
+[clk=00794249 pc=0x0801d140] TRACE GPIOA PA4 output=1
+[clk=00794688 pc=0x0801d13c] WARN  GPIO invalid offset=0x00000028
+[clk=00794697 pc=0x0802698c] DEBUG SPI1 spi-flash cmd=ReadDeviceID args=[] reply=Data([00, aa, bb, cc])
+[clk=00794697 pc=0x0802698c] TRACE SPI1 spi-flash write=90
+[clk=00794726 pc=0x08026986] TRACE SPI1 spi-flash read=ff
+[clk=00794738 pc=0x0802698c] TRACE SPI1 spi-flash write=00
+[clk=00794767 pc=0x08026986] TRACE SPI1 spi-flash read=00
+[clk=00794779 pc=0x0802698c] TRACE SPI1 spi-flash write=00
+[clk=00794808 pc=0x08026986] TRACE SPI1 spi-flash read=aa
+[clk=00794820 pc=0x0802698c] TRACE SPI1 spi-flash write=00
+[clk=00794849 pc=0x08026986] TRACE SPI1 spi-flash read=bb
+[clk=00794861 pc=0x0802698c] TRACE SPI1 spi-flash write=ff
+[clk=00794890 pc=0x08026986] TRACE SPI1 spi-flash read=cc
+[clk=00794903 pc=0x0802698c] TRACE SPI1 spi-flash write=ff
+[clk=00794932 pc=0x08026986] TRACE SPI1 spi-flash read=00
+[clk=00794941 pc=0x0801d140] TRACE GPIOA PA4 output=1
+
+PB10 - output - PULL-UP - very high
+
+[clk=00795146 pc=0x0801d25c] TRACE GPIOB PB10 mode=output
+[clk=00795147 pc=0x0801d25e] TRACE GPIOB PB10 input_cfg=pull-up
+[clk=00795302 pc=0x0801d2a0] TRACE GPIOB PB10 speed=very-high
+
+PB11 - output - PULL-UP - very high - open-drain
+
+[clk=00795461 pc=0x0801d25c] TRACE GPIOB PB11 mode=output
+[clk=00795462 pc=0x0801d25e] TRACE GPIOB PB11 input_cfg=pull-up
+[clk=00795476 pc=0x0801d270] TRACE GPIOB PB11 output_cfg=open-drain
+[clk=00795618 pc=0x0801d2a0] TRACE GPIOB PB11 speed=very-high
+
+PG2 - LCD RST - PULL-UP very high
+
+[clk=00795797 pc=0x0801d25c] TRACE GPIOG PG2 mode=output
+[clk=00795798 pc=0x0801d25e] TRACE GPIOG PG2 input_cfg=pull-up
+[clk=00795953 pc=0x0801d2a0] TRACE GPIOG PG2 speed=very-high
+
+PG8 - LCD BL PULL-UP very-high
+
+[clk=00796112 pc=0x0801d25c] TRACE GPIOG PG8 mode=output
+[clk=00796113 pc=0x0801d25e] TRACE GPIOG PG8 input_cfg=pull-up
+[clk=00796268 pc=0x0801d2a0] TRACE GPIOG PG8 speed=very-high
+
+# FMC PINS
+
+[clk=00796476 pc=0x0801d136] TRACE GPIOD PD4 alternate_cfg=AF12
+[clk=00796476 pc=0x0801d136] TRACE GPIOD PD5 alternate_cfg=AF12
+[clk=00796476 pc=0x0801d136] TRACE GPIOD PD7 alternate_cfg=AF12
+[clk=00796664 pc=0x0801d25c] TRACE GPIOD PD4 mode=alternate
+[clk=00796664 pc=0x0801d25c] TRACE GPIOD PD5 mode=alternate
+[clk=00796664 pc=0x0801d25c] TRACE GPIOD PD7 mode=alternate
+[clk=00796665 pc=0x0801d25e] TRACE GPIOD PD4 input_cfg=pull-up
+[clk=00796665 pc=0x0801d25e] TRACE GPIOD PD5 input_cfg=pull-up
+[clk=00796665 pc=0x0801d25e] TRACE GPIOD PD7 input_cfg=pull-up
+
+# REAL ADDRESS PIN PG7 - pull-down
+
+[clk=00796837 pc=0x0801d25c] TRACE GPIOG PG7 mode=output
+[clk=00796838 pc=0x0801d25e] TRACE GPIOG PG7 input_cfg=pull-down
+
+# FMC PINS
+
+[clk=00797007 pc=0x0801d2a0] TRACE GPIOD PD4 speed=very-high
+[clk=00797007 pc=0x0801d2a0] TRACE GPIOD PD5 speed=very-high
+[clk=00797007 pc=0x0801d2a0] TRACE GPIOD PD7 speed=very-high
+
+# REAL ADDRESS PIN PG7
+
+[clk=00797162 pc=0x0801d2a0] TRACE GPIOG PG7 speed=very-high
+
+# FMC PINS
+
+[clk=00797367 pc=0x0801d136] TRACE GPIOD PD0 alternate_cfg=AF12
+[clk=00797367 pc=0x0801d136] TRACE GPIOD PD1 alternate_cfg=AF12
+[clk=00797368 pc=0x0801d138] TRACE GPIOD PD8 alternate_cfg=AF12
+[clk=00797368 pc=0x0801d138] TRACE GPIOD PD9 alternate_cfg=AF12
+[clk=00797368 pc=0x0801d138] TRACE GPIOD PD10 alternate_cfg=AF12
+[clk=00797368 pc=0x0801d138] TRACE GPIOD PD14 alternate_cfg=AF12
+[clk=00797368 pc=0x0801d138] TRACE GPIOD PD15 alternate_cfg=AF12
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD0 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD1 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD8 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD9 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD10 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD14 mode=alternate
+[clk=00797611 pc=0x0801d25c] TRACE GPIOD PD15 mode=alternate
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD0 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD1 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD8 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD9 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD10 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD14 input_cfg=pull-up
+[clk=00797612 pc=0x0801d25e] TRACE GPIOD PD15 input_cfg=pull-up
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD0 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD1 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD8 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD9 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD10 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD14 speed=very-high
+[clk=00797809 pc=0x0801d2a0] TRACE GPIOD PD15 speed=very-high
+[clk=00798034 pc=0x0801d136] TRACE GPIOE PE7 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE8 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE9 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE10 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE11 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE12 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE13 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE14 alternate_cfg=AF12
+[clk=00798035 pc=0x0801d138] TRACE GPIOE PE15 alternate_cfg=AF12
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE7 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE8 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE9 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE10 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE11 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE12 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE13 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE14 mode=alternate
+[clk=00798306 pc=0x0801d25c] TRACE GPIOE PE15 mode=alternate
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE7 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE8 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE9 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE10 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE11 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE12 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE13 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE14 input_cfg=pull-up
+[clk=00798307 pc=0x0801d25e] TRACE GPIOE PE15 input_cfg=pull-up
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE7 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE8 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE9 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE10 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE11 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE12 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE13 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE14 speed=very-high
+[clk=00798518 pc=0x0801d2a0] TRACE GPIOE PE15 speed=very-high
+
+[clk=00798564 pc=0x08019818] TRACE FMC.BANK1 display read reg=BCR
+[clk=00798620 pc=0x080198ce] TRACE FMC.BANK1 display write reg=BCR
+[clk=00798624 pc=0x080198d8] TRACE FMC.BANK1 display write reg=BTR
+[clk=00798628 pc=0x080198e2] TRACE FMC.BANK1 display write reg=BWTR
+[clk=00798634 pc=0x080197f6] TRACE FMC.BANK1 display read reg=BCR
+[clk=00798638 pc=0x08019802] TRACE FMC.BANK1 display write reg=BCR
+
+LCD_RST pin
+
+[clk=00798645 pc=0x0801d140] TRACE GPIOG PG2 output=1
+[clk=00801358 pc=0x0801d13c] WARN  GPIO invalid offset=0x00000028
+[clk=00909371 pc=0x0801d140] TRACE GPIOG PG2 output=1
+[clk=01233432 pc=0x0801d13c] WARN  GPIO invalid offset=0x00000028

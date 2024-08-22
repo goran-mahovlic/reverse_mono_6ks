@@ -50,7 +50,7 @@ typedef enum {
  * GLOBAL PROTOTYPES
  **********************/
 
-bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
+void xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data);
 void XPT2046_init(SoftSPI_TypeDef *spi, touchOrienation orientation, const uint16_t width, const uint16_t height);
 void xpt2046_lv_init(void);
 bool xpt2046_getXY(uint16_t* x, uint16_t* y);

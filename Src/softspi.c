@@ -125,13 +125,13 @@ uint16_t readSPI(uint8_t  command) {
 
 void SoftSPI_WriteBuffer(SoftSPI_TypeDef *SoftSPIx, uint8_t *pWrite, uint32_t len)
 {
-    uint8_t data;
+    //uint8_t data;
     uint8_t byte;
     uint8_t i, j;
 
     for (j = 0; j < len; j++)
     {
-        data = 0;
+        //data = 0;
         byte = pWrite[j];
 
         for (i = 0; i < 8; i++)

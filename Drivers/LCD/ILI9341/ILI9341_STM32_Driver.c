@@ -155,7 +155,7 @@ void LV_tft_init(void)
 void monitor_cb(lv_disp_drv_t * d, uint32_t t, uint32_t p)
 {
     t_last = t;
-	uint32_t tmp = t;
+	//uint32_t tmp = t;
     //lv_obj_invalidate(lv_scr_act());   /*Continuously refresh the whole screen*/
 }
 
@@ -304,19 +304,19 @@ HAL_Delay(delayms);
 /* Set Address - Location block - to draw into */
 void ILI9341_Set_Address(uint16_t X1, uint16_t Y1, uint16_t X2, uint16_t Y2)
 {
-ILI9341_Write_Command(0x2A);
-ILI9341_Write_Data(X1>>8);
-ILI9341_Write_Data(X1);
-ILI9341_Write_Data(X2>>8);
-ILI9341_Write_Data(X2);
+	ILI9341_Write_Command(0x2A);
+	ILI9341_Write_Data(X1>>8);
+	ILI9341_Write_Data(X1);
+	ILI9341_Write_Data(X2>>8);
+	ILI9341_Write_Data(X2);
 
-ILI9341_Write_Command(0x2B);
-ILI9341_Write_Data(Y1>>8);
-ILI9341_Write_Data(Y1);
-ILI9341_Write_Data(Y2>>8);
-ILI9341_Write_Data(Y2);
+	ILI9341_Write_Command(0x2B);
+	ILI9341_Write_Data(Y1>>8);
+	ILI9341_Write_Data(Y1);
+	ILI9341_Write_Data(Y2>>8);
+	ILI9341_Write_Data(Y2);
 
-ILI9341_Write_Command(0x2C);
+	ILI9341_Write_Command(0x2C);
 }
 
 /*HARDWARE RESET*/
@@ -324,54 +324,52 @@ void ILI9341_Reset(void)
 {
 	//HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_RESET);
 	//ILI9341_Write_Command(0x01); //only software for blackboard
-	// 
 
 	//lcdDelay(500);
 	//HAL_GPIO_WritePin(LCD_BL_PORT, LCD_BL_PIN, GPIO_PIN_SET);
 	
-HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
-//lcdDelay(200);
-//HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
-lcdDelay(200);
-HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_SET);	
+	HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_RESET);
+	//lcdDelay(200);
+	//HAL_GPIO_WritePin(LCD_CS_PORT, LCD_CS_PIN, GPIO_PIN_RESET);
+	lcdDelay(200);
+	HAL_GPIO_WritePin(LCD_RST_PORT, LCD_RST_PIN, GPIO_PIN_SET);	
 
 }
 
 /*Ser rotation of the screen - changes x0 and y0*/
 void ILI9341_Set_Rotation(uint8_t Rotation) 
 {
-	
-uint8_t screen_rotation = Rotation;
+	uint8_t screen_rotation = Rotation;
 
-ILI9341_Write_Command(0x36);
-lcdDelay(1);
-	
-switch(screen_rotation) 
-	{
-		case SCREEN_VERTICAL_1:
-			ILI9341_Write_Data(0x40|0x08);
-			LCD_WIDTH = 320;
-			LCD_HEIGHT = 480;
-			break;
-		case SCREEN_HORIZONTAL_1:
-			ILI9341_Write_Data(0x20|0x08);
-			LCD_WIDTH  = 480;
-			LCD_HEIGHT = 320;
-			break;
-		case SCREEN_VERTICAL_2:
-			ILI9341_Write_Data(0x80|0x08);
-			LCD_WIDTH  = 320;
-			LCD_HEIGHT = 480;
-			break;
-		case SCREEN_HORIZONTAL_2:
-			ILI9341_Write_Data(0x40|0x80|0x20|0x08);
-			LCD_WIDTH  = 480;
-			LCD_HEIGHT = 320;
-			break;
-		default:
-			//EXIT IF SCREEN ROTATION NOT VALID!
-			break;
-	}
+	ILI9341_Write_Command(0x36);
+	lcdDelay(1);
+		
+	switch(screen_rotation) 
+		{
+			case SCREEN_VERTICAL_1:
+				ILI9341_Write_Data(0x40|0x08);
+				LCD_WIDTH = 320;
+				LCD_HEIGHT = 480;
+				break;
+			case SCREEN_HORIZONTAL_1:
+				ILI9341_Write_Data(0x20|0x08);
+				LCD_WIDTH  = 480;
+				LCD_HEIGHT = 320;
+				break;
+			case SCREEN_VERTICAL_2:
+				ILI9341_Write_Data(0x80|0x08);
+				LCD_WIDTH  = 320;
+				LCD_HEIGHT = 480;
+				break;
+			case SCREEN_HORIZONTAL_2:
+				ILI9341_Write_Data(0x40|0x80|0x20|0x08);
+				LCD_WIDTH  = 480;
+				LCD_HEIGHT = 320;
+				break;
+			default:
+				//EXIT IF SCREEN ROTATION NOT VALID!
+				break;
+		}
 }
 
 /*Enable LCD display*/
@@ -524,7 +522,7 @@ ILI9341_Write_Data(15);
 
 #endif
 #ifdef SATURN
-
+	// Positive Gamma Correction
 	ILI9341_Write_Command(0xe0);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x03);
@@ -541,7 +539,7 @@ ILI9341_Write_Data(15);
 	ILI9341_Write_Data(0x13);
 	ILI9341_Write_Data(0x15);
 	ILI9341_Write_Data(0x0f);
-
+	// Negative Gamma Correction
 	ILI9341_Write_Command(0xe1);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x11);
@@ -558,44 +556,44 @@ ILI9341_Write_Data(15);
 	ILI9341_Write_Data(0x33);
 	ILI9341_Write_Data(0x37);
 	ILI9341_Write_Data(0x0f);
-
+	// Power Control 1
 	ILI9341_Write_Command(0xc0);
 	ILI9341_Write_Data(0x17);
 	ILI9341_Write_Data(0x15);
-
+	// Power Control 2
 	ILI9341_Write_Command(0xc1);
 	ILI9341_Write_Data(0x41);
-
+	// VCOM Control 1
 	ILI9341_Write_Command(0xc5);
 	ILI9341_Write_Data(0x00);
 	ILI9341_Write_Data(0x12);
 	ILI9341_Write_Data(0x80);
-
+	// Pixel Format Set
 	ILI9341_Write_Command(0x3a);
 	ILI9341_Write_Data(0x55);
-
+	// RGB Interface Signal Control 
 	ILI9341_Write_Command(0xb0);
 	ILI9341_Write_Data(0x00);
-
+	// Frame Rate Control 
 	ILI9341_Write_Command(0xb1);
 	ILI9341_Write_Data(0xa0);
-
+	//Display Inversion Control 
 	ILI9341_Write_Command(0xb4);
 	ILI9341_Write_Data(0x02);
-
+	// Positive Gamma Correction
 	ILI9341_Write_Command(0xe9);
 	ILI9341_Write_Data(0x00);
-
+	// Pump ratio control
 	ILI9341_Write_Command(0xf7);
 	ILI9341_Write_Data(0xa9);
 	ILI9341_Write_Data(0x51);
 	ILI9341_Write_Data(0x2c);
 	ILI9341_Write_Data(0x82);
-
+	// Display Function Control 
 	ILI9341_Write_Command(0xb6);
 	ILI9341_Write_Data(0x02);
 	ILI9341_Write_Data(0x02);
-
+	// Memory Access Control 
 	ILI9341_Write_Command(0x36);
 	ILI9341_Write_Data(0xe8);
 

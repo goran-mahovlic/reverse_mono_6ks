@@ -87,14 +87,6 @@ volatile uint8_t touchPressed;
 #define LCD_PB10_GPIO_Port GPIOB
 #define LCD_PB11_Pin GPIO_PIN_11
 #define LCD_PB11_GPIO_Port GPIOB
-#define LCD_NSS_OLD_Pin GPIO_PIN_12
-#define LCD_NSS_OLD_GPIO_Port GPIOB
-#define LCD_SCK_Pin GPIO_PIN_13
-#define LCD_SCK_GPIO_Port GPIOB
-#define LCD_MISO_Pin GPIO_PIN_14
-#define LCD_MISO_GPIO_Port GPIOB
-#define LCD_MOSI_Pin GPIO_PIN_15
-#define LCD_MOSI_GPIO_Port GPIOB
 #define TS_CS_Pin GPIO_PIN_12
 #define TS_CS_GPIO_Port GPIOD
 #define TS_CLK_Pin GPIO_PIN_13
@@ -112,8 +104,6 @@ volatile uint8_t touchPressed;
 #define FMC_A1_REAL_GPIO_Port GPIOG
 #define LCD_BL_Pin GPIO_PIN_8
 #define LCD_BL_GPIO_Port GPIOG
-#define LCD_NSS_Pin GPIO_PIN_15
-#define LCD_NSS_GPIO_Port GPIOA
 #define MOTOR_M0_Pin GPIO_PIN_10
 #define MOTOR_M0_GPIO_Port GPIOG
 #define MOTOR_DEC1_Pin GPIO_PIN_11
@@ -124,6 +114,8 @@ volatile uint8_t touchPressed;
 #define MOTOR_M1_GPIO_Port GPIOG
 #define MOTOR_nSLEEP_Pin GPIO_PIN_14
 #define MOTOR_nSLEEP_GPIO_Port GPIOG
+#define SPI3_NSS_Pin GPIO_PIN_15
+#define SPI3_NSS_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
 

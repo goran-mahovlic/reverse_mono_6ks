@@ -114,19 +114,6 @@ for (int i=0;i<4;i++){
  */
 #define READ_X 0x90
 #define READ_Y 0xD0
-//static const uint8_t _cmd_read_x[] = {READ_X};
-//static const uint8_t _cmd_read_y[] = {READ_Y};
-//static const uint8_t _zeroes_tx[] = {0x00, 0x00};
-
-    //static void _XPT2046_TouchSelect(void)
-// {
-   // HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_RESET);
-// }
-
-//static void _XPT2046_TouchUnselect(void)
-//{
-    //HAL_GPIO_WritePin(TS_CS_GPIO_Port, TS_CS_Pin, GPIO_PIN_SET);
-//}
 
 static void StartSoftSPI(void){
 
@@ -164,10 +151,6 @@ void XPT2046_init(SoftSPI_TypeDef *spi, touchOrienation orientation, const uint1
 	_height = height;
 }
 
-//bool XPT2046_TouchPressed(void)
-//{
-   // return touchPressed;
-//}
 //XPT2046_AVG
 bool xpt2046_getXY(uint16_t* x, uint16_t* y)
 {
@@ -178,16 +161,7 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
     avg_x = 0;
     avg_y = 0;
     for(uint8_t i = 0; i < XPT2046_AVG; i++)
-    {
-        
-        //if(!XPT2046_TouchPressed())
-       // if(!touchPressed)
-       // {
-       //    last_state = LV_INDEV_STATE_REL;
-            //touchPressed = false;
-       //     break;
-       // }
-        
+    {  
         nsamples++;
         uint16_t y_raw;
         uint16_t x_raw;        
@@ -199,32 +173,7 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
         avg_x += x_raw; //(((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
         avg_y += y_raw; //(((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
         DELAY_MS(1);
-       /*
-        nsamples++;
-        uint8_t y_raw[2];
-        SoftSPI_SetSS(&soft_spi);
-        SoftSPI_WriteBuffer(&soft_spi, (uint8_t*)_cmd_read_y,sizeof(_cmd_read_y));
-        //SoftSPI_SetSS(&soft_spi);
-        DELAY_MS(1);
-        //SoftSPI_ClrSS(&soft_spi);
-        SoftSPI_WriteReadBuff(&soft_spi, (uint8_t*)_zeroes_tx, y_raw, sizeof(y_raw));
-        SoftSPI_ClrSS(&soft_spi);
-        DELAY_MS(1);
-        uint8_t x_raw[2];
-        SoftSPI_SetSS(&soft_spi);
-        SoftSPI_WriteBuffer(&soft_spi, (uint8_t*)_cmd_read_x,sizeof(_cmd_read_x));
-        //SoftSPI_SetSS(&soft_spi);
-        DELAY_MS(1);
-        //SoftSPI_ClrSS(&soft_spi);
-        SoftSPI_WriteReadBuff(&soft_spi, (uint8_t*)_zeroes_tx, x_raw, sizeof(x_raw));
-        SoftSPI_ClrSS(&soft_spi);
-        DELAY_MS(1);
-        avg_x += (((uint16_t)x_raw[0]) << 8) | ((uint16_t)x_raw[1]);
-        avg_y += (((uint16_t)y_raw[0]) << 8) | ((uint16_t)y_raw[1]);
-        */
     }
-
-    //_XPT2046_TouchUnselect();
 
     if(nsamples < XPT2046_AVG)
     {
@@ -264,28 +213,25 @@ bool xpt2046_getXY(uint16_t* x, uint16_t* y)
 }
 
 
-bool xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
+void xpt2046_read(lv_indev_drv_t * indev_drv, lv_indev_data_t * data)
 {
     
-    //if(!XPT2046_TouchPressed() )
     if(!touchPressed)
     {
-    last_state = LV_INDEV_STATE_RELEASED;
+        last_state = LV_INDEV_STATE_RELEASED;
     } 
     else{
-
-    xpt2046_getXY(&x, &y);
-    //x = last_x;
-    //y = last_y;
-
-    data->point.x = (lv_coord_t)x;
-    data->point.y = (lv_coord_t)y;
-    data->state = LV_INDEV_STATE_PRESSED;// ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
-    if(HAL_GPIO_ReadPin(TS_IRQ_GPIO_Port,TS_IRQ_Pin)){
-        touchPressed = false;
+        if(HAL_GPIO_ReadPin(TS_IRQ_GPIO_Port,TS_IRQ_Pin)){
+            touchPressed = false;
+        }
+        else{
+            xpt2046_getXY(&x, &y);
+            data->point.x = (lv_coord_t)x;
+            data->point.y = (lv_coord_t)y;
+            data->state = LV_INDEV_STATE_PRESSED;// ? LV_INDEV_STATE_PR : LV_INDEV_STATE_REL;
+            }
     }
-    return false;
-    }
+    //return false;
 }
 
 #endif
