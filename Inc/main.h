@@ -55,6 +55,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 volatile uint8_t touchPressed;
+
 //uint16_t x , y;
 /* USER CODE END EFP */
 
@@ -91,8 +92,8 @@ volatile uint8_t touchPressed;
 #define TS_CS_GPIO_Port GPIOD
 #define TS_CLK_Pin GPIO_PIN_13
 #define TS_CLK_GPIO_Port GPIOD
-#define LCD_RSTG2_Pin GPIO_PIN_2
-#define LCD_RSTG2_GPIO_Port GPIOG
+#define LCD_RST_old_Pin GPIO_PIN_2
+#define LCD_RST_old_GPIO_Port GPIOG
 #define TS_DOUT_Pin GPIO_PIN_3
 #define TS_DOUT_GPIO_Port GPIOG
 #define TS_DIN_Pin GPIO_PIN_4
@@ -118,6 +119,8 @@ volatile uint8_t touchPressed;
 #define SPI3_NSS_GPIO_Port GPIOG
 
 /* USER CODE BEGIN Private defines */
+
+
 
 /* USER CODE END Private defines */
 

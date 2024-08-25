@@ -62,6 +62,8 @@ RTC_HandleTypeDef hrtc;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi3;
+DMA_HandleTypeDef hdma_spi3_tx;
+DMA_HandleTypeDef hdma_spi3_rx;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 SRAM_HandleTypeDef hsram1;
@@ -92,18 +94,24 @@ void set_var_current_position(int32_t value);
 const char *get_var_current_operation();
 void set_var_current_operation(const char *value);
 char currentOP[200] = "Idle";
-uint8_t lcdStartDrawing[1] = { 0xFB };
-uint8_t lcd_black[2] = { 0x00, 0xFF };
-uint8_t lcd_white[2] = { 0x00, 0x00 };
+uint8_t lcdStartDrawing[2] = { 0xFB, 0x00 };
+uint8_t lcd_black[2] = { 0xFF, 0xFF };
+uint8_t lcd_white[2] = { 0x0F, 0xFF };
 uint8_t readID[1] = { 0xF0 };
-uint8_t spiTX[2] = { 0x00, 0x00 };
-uint8_t spiRX[4] = { 0x00 , 0x00, 0x00, 0x00 };
-uint8_t fv[4] = { 0x00 };
+uint8_t spiRX[200] = { 0x00 };
+uint8_t buffer[4096];
+
+uint8_t tx_buffer[18] = {
+    0xF1, 0x00, 0x00, 0x8C, 0x80, 0x8F, 0x97, 0xAC,
+    0xB3, 0xC5, 0xC7, 0xD0, 0xDB, 0xDE, 0xF1, 0xF7,
+    0xFF, 0xFF
+};
+
 void readInput();
 void LCD_readID();
 void FANoff();
 void LCD_reset();
-void LCD_sendReceive(uint8_t command);
+void setWhite();
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -158,46 +166,166 @@ void FUN_000194b0(int param_1)
 
 */
 
-void LCD_sendReceive(uint8_t command){
-    spiTX[0] = command;
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-    HAL_Delay(10);
-    HAL_SPI_TransmitReceive(&hspi3, spiTX, spiRX, 1, 50);    HAL_Delay(60);
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-    HAL_Delay(10);
+
+void setBlack(){
+
+  // Sending two bytes 0xFB 0x00
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
+
+  for (int i = 0; i < 4096; i += 2) {
+      buffer[i] = 0x0F;   // Set the first byte of the pair to 0xFF
+      buffer[i + 1] = 0xFF; // Set the second byte of the pair to 0xF0
+  }
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+}
+
+void setWhite(){
+  // Sending two bytes 0xFB 0x00
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+  HAL_Delay(10);
+  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
+
+  for (int i = 0; i < 4096; i++) {
+      buffer[i] = 0xFF;
+  }
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
+  HAL_Delay(20);
+
+  //HAL_SPI_Transmit_DMA(&hspi3, buffer,3500);
+  //HAL_Delay(20);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+}
+
+void setWhiteBlackWhite(){
+
+// Does not work!!!
+
+// Sending two bytes 0xFB 0x00
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+HAL_Delay(10);
+HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+HAL_Delay(1000);
+
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+HAL_Delay(10);
+HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
+
+  for (int i = 0; i < 3600; i += 2) {
+      buffer[i] = 0x0F;   
+      buffer[i + 1] = 0xFF; 
+  }
+
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
+
+  for (int i = 0; i < 3500; i++) {
+      buffer[i] = 0xFF;
+  }
+
+
+  HAL_Delay(20);
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
+
+  for (int i = 0; i < 3600; i += 2) {
+      buffer[i] = 0x0F;   
+      buffer[i + 1] = 0xFF; 
+  }
+
+  HAL_Delay(20);
+
+  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
+
+  HAL_Delay(20);
+  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
 }
 
 void LCD_init(){
-LCD_sendReceive(0x00);
-LCD_sendReceive(0xf1);
-LCD_sendReceive(0x00);
-LCD_sendReceive(0x00);
-LCD_sendReceive(0x8c);
-LCD_sendReceive(0x80);
-LCD_sendReceive(0x8f);
-LCD_sendReceive(0x97);
-LCD_sendReceive(0xac);
-LCD_sendReceive(0xb3);
-LCD_sendReceive(0xc5);
-LCD_sendReceive(0xc7);
-LCD_sendReceive(0xd0);
-LCD_sendReceive(0xdb);
-LCD_sendReceive(0xde);
-LCD_sendReceive(0xf1);
-LCD_sendReceive(0xf7);
-LCD_sendReceive(0xff);
-LCD_sendReceive(0xff);
-HAL_SPI_Receive(&hspi3, spiRX, 1, 100);
-HAL_Delay(50);
-spiTX[0] = 0xFB;
-HAL_SPI_Transmit(&hspi3, spiTX, 1, 50);
-HAL_Delay(50);
+
+// Important INIT part! Before sending FB
+
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+HAL_Delay(10);
+HAL_SPI_Transmit(&hspi3, tx_buffer, 18, 50);
+HAL_Delay(10);
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+// Waiting a bit
+HAL_Delay(200);
+
+
+
+// Sending two bytes 0xFB 0x00
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
+HAL_Delay(1);
+HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
+
+// Do not kow what this does or is it needed - but that is how data looks on logic analyser
+// It may be used to tell FPGA how much buffer we want to fill?
+
+buffer[0]  = 0xFB;
+buffer[1]  = 0x40;
+buffer[2]  = 0xFB;
+buffer[3]  = 0x40;
+buffer[4]  = 0xFB;
+
+// Also taken from init sequence
+
+for (int i=5;i<2700;i++){
+buffer[i] = 0xf5;
+}
+for (int i=6;i<2700;i+=2){
+buffer[i] = 0xa0;
+}
+for (int i=7;i<2700;i+=3){
+buffer[i] = 0x0b;
+}
+for (int i=8;i<2700;i+=4){
+buffer[i] = 0x40;
+}
+for (int i=9;i<2700;i+=5){
+buffer[i] = 0xf5;
+}
+for (int i=10;i<2700;i+=6){
+buffer[i] = 0xa0;
+}
+
+HAL_SPI_Transmit_DMA(&hspi3, buffer,2700);
+
+HAL_Delay(10);
+
+for (int i=0;i<3600;i++){
+buffer[i] = 0xfb;
+}
+for (int i=1;i<3600;i+=2){
+buffer[i] = 0x40;
+}
+HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
+HAL_Delay(20);
+HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+HAL_Delay(100);
+
+// Screen now has some garbage, but works!!!
+// Set it white
+setWhite();
+
 }
 
 void LCD_readID(){
     HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
     HAL_Delay(10);
-    HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);    HAL_Delay(60);
+    HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);    
+    HAL_Delay(60);
     HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
     HAL_Delay(10);
     HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
@@ -226,34 +354,7 @@ void readInput(){
 
 void LCD_panel_half_black()
 {
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(10);
-  HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);
-  HAL_Delay(60);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-  HAL_Delay(10);  
-  //HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  //HAL_Delay(10);
-  //HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 1000);
-  //HAL_Delay(60);
-  //HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-  //HAL_Delay(6000);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 1, 100);
-  int i=0;
-  int j=0;
-  for (i = 0; i < 5760; ++i){
-    for (j = 0; j < 3600; ++j){
-      if (i<500){
-        HAL_SPI_Transmit(&hspi3, lcd_white, 2, 100); // Pixel data
-      }
-      else{
-        HAL_SPI_Transmit(&hspi3, lcd_black, 2, 100); // Pixel data     
-        }
-      }
-  }
-  HAL_Delay(60);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+
   }
 
 bool get_var_intial_home_z(){
@@ -332,10 +433,24 @@ void LCD_reset(){
 }
 
 void action_lcd(lv_event_t * e){
-  LCD_reset();
-  LCD_readID();
-  LCD_init();
-  LCD_panel_half_black();
+  setBlack();
+  HAL_Delay(500);
+  setWhite();
+  HAL_Delay(500);
+  setBlack();
+  HAL_Delay(500);
+  setWhite();
+  HAL_Delay(500);
+  setBlack();
+  HAL_Delay(500);
+  setWhite();
+  HAL_Delay(500);
+  setBlack();
+  HAL_Delay(500);
+  setWhite();
+  HAL_Delay(500);
+
+  //setWhiteBlackWhite();
 }
 
 void InitFullStep(void){
@@ -416,12 +531,15 @@ int main(void)
   //motor_init();
   FANoff();
   readInput();
+  LCD_reset();
+  LCD_readID();
+  LCD_init();
   //LCD_reset();
   //LCD_readID();
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
-  HAL_Delay(100);
+  // HAL_Delay(100);
   #ifdef USE_EEZ_PROJECT
   //lv_demo_benchmark();
   ui_init();
@@ -675,7 +793,7 @@ static void MX_SPI3_Init(void)
   hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi3.Init.NSS = SPI_NSS_SOFT;
-  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -700,6 +818,7 @@ static void MX_DMA_Init(void)
 
   /* DMA controller clock enable */
   __HAL_RCC_DMA2_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
 
   /* Configure DMA request hdma_memtomem_dma2_stream0 on DMA2_Stream0 */
   hdma_memtomem_dma2_stream0.Instance = DMA2_Stream0;
@@ -721,6 +840,12 @@ static void MX_DMA_Init(void)
   }
 
   /* DMA interrupt init */
+  /* DMA1_Stream0_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream0_IRQn);
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
   /* DMA2_Stream0_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream0_IRQn);
@@ -812,12 +937,12 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(FAN_GPIO_Port, FAN_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|LCD_RSTG2_Pin|TS_DIN_Pin|MOTOR_M0_Pin
-                          |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin
-                          |SPI3_NSS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, UV_LED_Pin|TS_DIN_Pin|MOTOR_M0_Pin|MOTOR_DEC1_Pin
+                          |MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, LCD_RST_Pin|FMC_A1_REAL_Pin|LCD_BL_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOG, LCD_RST_Pin|LCD_RST_old_Pin|FMC_A1_REAL_Pin|LCD_BL_Pin
+                          |SPI3_NSS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LCD_PB10_GPIO_Port, LCD_PB10_Pin, GPIO_PIN_RESET);
@@ -855,12 +980,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(FAN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_RSTG2_Pin LCD_BL_Pin
-                           MOTOR_M0_Pin MOTOR_DEC1_Pin MOTOR_DEC0_Pin MOTOR_M1_Pin
-                           MOTOR_nSLEEP_Pin */
-  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_RSTG2_Pin|LCD_BL_Pin
-                          |MOTOR_M0_Pin|MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin
-                          |MOTOR_nSLEEP_Pin;
+  /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_BL_Pin MOTOR_M0_Pin
+                           MOTOR_DEC1_Pin MOTOR_DEC0_Pin MOTOR_M1_Pin MOTOR_nSLEEP_Pin */
+  GPIO_InitStruct.Pin = UV_LED_Pin|LCD_RST_Pin|LCD_BL_Pin|MOTOR_M0_Pin
+                          |MOTOR_DEC1_Pin|MOTOR_DEC0_Pin|MOTOR_M1_Pin|MOTOR_nSLEEP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -879,6 +1002,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : LCD_RST_old_Pin */
+  GPIO_InitStruct.Pin = LCD_RST_old_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(LCD_RST_old_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TS_DOUT_Pin */
   GPIO_InitStruct.Pin = TS_DOUT_Pin;

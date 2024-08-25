@@ -1,0 +1,2 @@
+IADD:00000007:/gd32_f427_rom_patch.bin
+IDSET:/gd32_f427_rom_patch.bin:7f0118461475675092209450
