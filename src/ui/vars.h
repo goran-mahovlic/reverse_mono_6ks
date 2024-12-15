@@ -15,7 +15,7 @@ extern "C" {
 // Flow global variables
 
 enum FlowGlobalVariables {
-    FLOW_GLOBAL_VARIABLE_NONE
+    FLOW_GLOBAL_VARIABLE_COEFFICIENT = 0
 };
 
 // Native global variables
@@ -28,6 +28,8 @@ extern int32_t get_var_current_position();
 extern void set_var_current_position(int32_t value);
 extern bool get_var_intial_home_z();
 extern void set_var_intial_home_z(bool value);
+extern double get_var_sensor();
+extern void set_var_sensor(double value);
 
 
 #ifdef __cplusplus

@@ -10,6 +10,7 @@ extern "C" {
 typedef struct _objects_t {
     lv_obj_t *main;
     lv_obj_t *page_1;
+    lv_obj_t *page_2;
     lv_obj_t *obj0;
     lv_obj_t *obj1;
     lv_obj_t *obj2;
@@ -20,6 +21,10 @@ typedef struct _objects_t {
     lv_obj_t *obj7;
     lv_obj_t *obj8;
     lv_obj_t *obj9;
+    lv_obj_t *obj10;
+    lv_obj_t *obj11;
+    lv_obj_t *obj12;
+    lv_obj_t *obj13;
 } objects_t;
 
 extern objects_t objects;
@@ -27,6 +32,7 @@ extern objects_t objects;
 enum ScreensEnum {
     SCREEN_ID_MAIN = 1,
     SCREEN_ID_PAGE_1 = 2,
+    SCREEN_ID_PAGE_2 = 3,
 };
 
 void create_screen_main();
@@ -34,6 +40,9 @@ void tick_screen_main();
 
 void create_screen_page_1();
 void tick_screen_page_1();
+
+void create_screen_page_2();
+void tick_screen_page_2();
 
 void create_screens();
 void tick_screen(int screen_index);

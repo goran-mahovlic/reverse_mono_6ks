@@ -34,6 +34,7 @@
 #include "../src/ui/ui.h"
 #include "ILI9341_STM32_Driver.h"
 #include "ILI9341_GFX.h"
+#include "INA219.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,6 +56,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+I2C_HandleTypeDef hi2c1;
+
 RNG_HandleTypeDef hrng;
 
 RTC_HandleTypeDef hrtc;
@@ -64,6 +67,10 @@ SPI_HandleTypeDef hspi2;
 SPI_HandleTypeDef hspi3;
 DMA_HandleTypeDef hdma_spi3_tx;
 DMA_HandleTypeDef hdma_spi3_rx;
+
+TIM_HandleTypeDef htim2;
+
+UART_HandleTypeDef huart4;
 
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 SRAM_HandleTypeDef hsram1;
@@ -75,11 +82,17 @@ SRAM_HandleTypeDef hsram1;
   extern uint8_t last_state;
   */
  //volatile uint8_t touchPressed = false;
+ INA219_t ina219;
+uint16_t sampling_counter = 0;
+double sensor_sampling = 0;
+volatile double sensor = 0;
 volatile uint32_t motorSpeed = 40000;
 volatile uint32_t ZPosition = 10000;
 volatile uint32_t maxPosition = 20000;
 bool initialHomeZ = false;
 Stepper_t stepperZ;
+double get_var_sensor();
+void set_var_sensor(double value);
 int32_t get_var_motor_speed();
 void set_var_motor_speed(int32_t value);
 void action_move_down(lv_event_t * e);
@@ -124,6 +137,9 @@ static void MX_SPI1_Init(void);
 static void MX_RTC_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_SPI3_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_UART4_Init(void);
+static void MX_I2C1_Init(void);
 void MX_USB_HOST_Process(void);
 
 /* USER CODE BEGIN PFP */
@@ -382,6 +398,14 @@ int32_t get_var_motor_speed(){
   return motorSpeed;
 }
 
+double get_var_sensor() {
+    return sensor;
+}
+
+void set_var_sensor(double value) {
+    sensor = value;
+}
+
 void FANoff(){
   HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
 }
@@ -527,6 +551,9 @@ int main(void)
   MX_SPI3_Init();
   MX_FATFS_Init();
   MX_USB_HOST_Init();
+  MX_TIM2_Init();
+  MX_UART4_Init();
+  MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   //motor_init();
   FANoff();
@@ -539,6 +566,11 @@ int main(void)
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
+
+  while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
+  {
+
+  }
   // HAL_Delay(100);
   #ifdef USE_EEZ_PROJECT
   //lv_demo_benchmark();
@@ -562,6 +594,17 @@ int main(void)
   lv_task_handler();
   ui_tick();
   HAL_Delay(10);
+  if (sampling_counter<10){
+    sampling_counter++;
+    sensor_sampling += INA219_ReadBusVoltage(&ina219);  
+  }
+ else{
+    sensor = (sensor_sampling/10)/1000;
+    sampling_counter = 0;
+    sensor_sampling = 0;
+ }
+ // vshunt = INA219_ReadShuntVolage(&ina219);
+ // current = INA219_ReadCurrent(&ina219);
   #else
     ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
     ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
@@ -631,6 +674,54 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief I2C1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_I2C1_Init(void)
+{
+
+  /* USER CODE BEGIN I2C1_Init 0 */
+
+  /* USER CODE END I2C1_Init 0 */
+
+  /* USER CODE BEGIN I2C1_Init 1 */
+
+  /* USER CODE END I2C1_Init 1 */
+  hi2c1.Instance = I2C1;
+  hi2c1.Init.ClockSpeed = 100000;
+  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
+  hi2c1.Init.OwnAddress1 = 0;
+  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+  hi2c1.Init.OwnAddress2 = 0;
+  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
+  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Analogue filter
+  */
+  if (HAL_I2CEx_ConfigAnalogFilter(&hi2c1, I2C_ANALOGFILTER_ENABLE) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Configure Digital filter
+  */
+  if (HAL_I2CEx_ConfigDigitalFilter(&hi2c1, 0) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN I2C1_Init 2 */
+
+  /* USER CODE END I2C1_Init 2 */
+
 }
 
 /**
@@ -809,6 +900,88 @@ static void MX_SPI3_Init(void)
 }
 
 /**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_OC_InitTypeDef sConfigOC = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 119;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 30;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_PWM_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.Pulse = 18;
+  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+  if (HAL_TIM_PWM_ConfigChannel(&htim2, &sConfigOC, TIM_CHANNEL_3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
+  HAL_TIM_MspPostInit(&htim2);
+
+}
+
+/**
+  * @brief UART4 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_UART4_Init(void)
+{
+
+  /* USER CODE BEGIN UART4_Init 0 */
+
+  /* USER CODE END UART4_Init 0 */
+
+  /* USER CODE BEGIN UART4_Init 1 */
+
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_8B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_NONE;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN UART4_Init 2 */
+
+  /* USER CODE END UART4_Init 2 */
+
+}
+
+/**
   * Enable DMA controller clock
   * Configure DMA for memory to memory transfers
   *   hdma_memtomem_dma2_stream0
@@ -931,7 +1104,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOE, MOTOR_ENABLE_Pin|MOTOR_DIR_Pin|MOTOR_STEP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LED_D1_GPIO_Port, LED_D1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(FAN_GPIO_Port, FAN_Pin, GPIO_PIN_SET);
@@ -953,6 +1126,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, TS_CS_Pin|TS_CLK_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(CS0_GPIO_Port, CS0_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : MOTOR_ENABLE_Pin MOTOR_DIR_Pin MOTOR_STEP_Pin */
   GPIO_InitStruct.Pin = MOTOR_ENABLE_Pin|MOTOR_DIR_Pin|MOTOR_STEP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -960,25 +1136,35 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : D1_Pin */
-  GPIO_InitStruct.Pin = D1_Pin;
+  /*Configure GPIO pin : LED_D1_Pin */
+  GPIO_InitStruct.Pin = LED_D1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(D1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LED_D1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : HOME_SW_Pin */
-  GPIO_InitStruct.Pin = HOME_SW_Pin;
+  /*Configure GPIO pins : HOME_SW_Pin D6_Pin D7_Pin D0_Pin
+                           D1_Pin D2_Pin D3_Pin CLK_Pin */
+  GPIO_InitStruct.Pin = HOME_SW_Pin|D6_Pin|D7_Pin|D0_Pin
+                          |D1_Pin|D2_Pin|D3_Pin|CLK_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(HOME_SW_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : FAN_Pin */
-  GPIO_InitStruct.Pin = FAN_Pin;
+  /*Configure GPIO pins : FAN_Pin CS0_Pin */
+  GPIO_InitStruct.Pin = FAN_Pin|CS0_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(FAN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : IO2_Pin C2_Pin C1_Pin I00_Pin
+                           R_C_Pin */
+  GPIO_InitStruct.Pin = IO2_Pin|C2_Pin|C1_Pin|I00_Pin
+                          |R_C_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
 
   /*Configure GPIO pins : UV_LED_Pin LCD_RST_Pin LCD_BL_Pin MOTOR_M0_Pin
                            MOTOR_DEC1_Pin MOTOR_DEC0_Pin MOTOR_M1_Pin MOTOR_nSLEEP_Pin */
@@ -1035,6 +1221,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOG, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : CMD_Pin */
+  GPIO_InitStruct.Pin = CMD_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(CMD_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);

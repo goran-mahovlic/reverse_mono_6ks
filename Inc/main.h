@@ -50,6 +50,8 @@ extern "C" {
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -66,8 +68,8 @@ volatile uint8_t touchPressed;
 #define MOTOR_DIR_GPIO_Port GPIOE
 #define MOTOR_STEP_Pin GPIO_PIN_5
 #define MOTOR_STEP_GPIO_Port GPIOE
-#define D1_Pin GPIO_PIN_0
-#define D1_GPIO_Port GPIOF
+#define LED_D1_Pin GPIO_PIN_0
+#define LED_D1_GPIO_Port GPIOF
 #define HOME_SW_Pin GPIO_PIN_3
 #define HOME_SW_GPIO_Port GPIOC
 #define FAN_Pin GPIO_PIN_3
@@ -80,6 +82,16 @@ volatile uint8_t touchPressed;
 #define FLASH_MISO_GPIO_Port GPIOA
 #define FLASH_MOSI_Pin GPIO_PIN_7
 #define FLASH_MOSI_GPIO_Port GPIOA
+#define IO2_Pin GPIO_PIN_11
+#define IO2_GPIO_Port GPIOF
+#define C2_Pin GPIO_PIN_12
+#define C2_GPIO_Port GPIOF
+#define C1_Pin GPIO_PIN_13
+#define C1_GPIO_Port GPIOF
+#define I00_Pin GPIO_PIN_14
+#define I00_GPIO_Port GPIOF
+#define R_C_Pin GPIO_PIN_15
+#define R_C_GPIO_Port GPIOF
 #define UV_LED_Pin GPIO_PIN_0
 #define UV_LED_GPIO_Port GPIOG
 #define LCD_RST_Pin GPIO_PIN_1
@@ -105,6 +117,24 @@ volatile uint8_t touchPressed;
 #define FMC_A1_REAL_GPIO_Port GPIOG
 #define LCD_BL_Pin GPIO_PIN_8
 #define LCD_BL_GPIO_Port GPIOG
+#define D6_Pin GPIO_PIN_6
+#define D6_GPIO_Port GPIOC
+#define D7_Pin GPIO_PIN_7
+#define D7_GPIO_Port GPIOC
+#define D0_Pin GPIO_PIN_8
+#define D0_GPIO_Port GPIOC
+#define D1_Pin GPIO_PIN_9
+#define D1_GPIO_Port GPIOC
+#define CS0_Pin GPIO_PIN_15
+#define CS0_GPIO_Port GPIOA
+#define D2_Pin GPIO_PIN_10
+#define D2_GPIO_Port GPIOC
+#define D3_Pin GPIO_PIN_11
+#define D3_GPIO_Port GPIOC
+#define CLK_Pin GPIO_PIN_12
+#define CLK_GPIO_Port GPIOC
+#define CMD_Pin GPIO_PIN_2
+#define CMD_GPIO_Port GPIOD
 #define MOTOR_M0_Pin GPIO_PIN_10
 #define MOTOR_M0_GPIO_Port GPIOG
 #define MOTOR_DEC1_Pin GPIO_PIN_11
