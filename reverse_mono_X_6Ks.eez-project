@@ -102,28 +102,11 @@
     "objID": "c6c71e16-53e1-217f-d03b-cef56c6b037a",
     "globalVariables": [
       {
-        "objID": "fc5f00db-5033-41a7-8d1c-034302ac19de",
-        "name": "motor_speed",
-        "type": "integer",
-        "defaultValue": "1000",
-        "persistent": false,
-        "native": true
-      },
-      {
-        "objID": "a624b505-4852-47fb-a56b-2bf90bbd3964",
-        "name": "current_operation",
-        "type": "string",
-        "defaultValue": "\"Idle\"",
-        "persistent": false,
-        "native": true
-      },
-      {
-        "objID": "b654546c-f554-43b0-9f1b-faefdd003657",
-        "name": "current_position",
-        "type": "integer",
-        "defaultValue": "5000",
-        "persistent": false,
-        "native": true
+        "objID": "a683769e-9946-4d5a-859d-abdb4bc168c0",
+        "name": "coefficient",
+        "type": "double",
+        "defaultValue": "2.195",
+        "persistent": false
       },
       {
         "objID": "590bd703-e81a-46ea-9c83-3606ccde860b",
@@ -134,33 +117,10 @@
         "native": true
       },
       {
-        "objID": "55e764ec-d6e1-4f96-d8a3-cb9ba25b6999",
-        "name": "sensor",
-        "type": "double",
-        "defaultValue": "0.01",
-        "persistent": false,
-        "native": true
-      },
-      {
-        "objID": "a683769e-9946-4d5a-859d-abdb4bc168c0",
-        "name": "coefficient",
-        "type": "double",
-        "defaultValue": "2.195",
-        "persistent": false
-      },
-      {
         "objID": "f32aeed6-a104-4624-a134-abfe5346784d",
         "name": "calibrated",
         "type": "boolean",
         "defaultValue": "false",
-        "persistent": false,
-        "native": true
-      },
-      {
-        "objID": "3d1e6083-3b1a-499c-e0a0-7c478ba66ccf",
-        "name": "max_diff",
-        "type": "double",
-        "defaultValue": "0.01",
         "persistent": false,
         "native": true
       },
@@ -181,10 +141,18 @@
         "native": true
       },
       {
-        "objID": "2c3c0d4b-f338-4bf5-e0b2-febb0a917aeb",
-        "name": "loops",
-        "type": "integer",
-        "defaultValue": "0",
+        "objID": "3d1e6083-3b1a-499c-e0a0-7c478ba66ccf",
+        "name": "max_diff",
+        "type": "double",
+        "defaultValue": "0.01",
+        "persistent": false,
+        "native": true
+      },
+      {
+        "objID": "55e764ec-d6e1-4f96-d8a3-cb9ba25b6999",
+        "name": "sensor",
+        "type": "double",
+        "defaultValue": "0.01",
         "persistent": false,
         "native": true
       },
@@ -209,6 +177,38 @@
         "name": "sensor_max",
         "type": "double",
         "defaultValue": "10.00",
+        "persistent": false,
+        "native": true
+      },
+      {
+        "objID": "fc5f00db-5033-41a7-8d1c-034302ac19de",
+        "name": "motor_speed",
+        "type": "integer",
+        "defaultValue": "1000",
+        "persistent": false,
+        "native": true
+      },
+      {
+        "objID": "b654546c-f554-43b0-9f1b-faefdd003657",
+        "name": "current_position",
+        "type": "integer",
+        "defaultValue": "5000",
+        "persistent": false,
+        "native": true
+      },
+      {
+        "objID": "2c3c0d4b-f338-4bf5-e0b2-febb0a917aeb",
+        "name": "loops",
+        "type": "integer",
+        "defaultValue": "0",
+        "persistent": false,
+        "native": true
+      },
+      {
+        "objID": "a624b505-4852-47fb-a56b-2bf90bbd3964",
+        "name": "current_operation",
+        "type": "string",
+        "defaultValue": "\"Idle\"",
         "persistent": false,
         "native": true
       }
@@ -1852,7 +1852,7 @@
                   "flagScrollbarMode": "",
                   "flagScrollDirection": "",
                   "checkedStateType": "literal",
-                  "disabledState": "current_position >= 20000",
+                  "disabledState": "",
                   "disabledStateType": "expression",
                   "states": "",
                   "localStyles": {
@@ -2155,7 +2155,7 @@
                   "flagScrollbarMode": "",
                   "flagScrollDirection": "",
                   "checkedStateType": "literal",
-                  "disabledState": "current_position <= 0",
+                  "disabledState": "",
                   "disabledStateType": "expression",
                   "states": "",
                   "localStyles": {
@@ -2782,7 +2782,7 @@
                   "flagScrollbarMode": "",
                   "flagScrollDirection": "",
                   "checkedStateType": "literal",
-                  "disabledState": "current_position <= 0",
+                  "disabledState": "",
                   "disabledStateType": "expression",
                   "states": "",
                   "localStyles": {
