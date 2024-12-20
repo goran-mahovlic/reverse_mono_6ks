@@ -75,56 +75,65 @@ UART_HandleTypeDef huart4;
 DMA_HandleTypeDef hdma_memtomem_dma2_stream0;
 SRAM_HandleTypeDef hsram1;
 
-/* USER CODE BEGIN PV */
-/*
-  extern int16_t last_x;
-  extern int16_t last_y;
-  extern uint8_t last_state;
-  */
- //volatile uint8_t touchPressed = false;
- INA219_t ina219;
-uint16_t sampling_counter = 0;
-double sensor_sampling = 0;
-volatile double sensor = 0;
-volatile uint32_t motorSpeed = 40000;
-volatile uint32_t ZPosition = 10000;
-volatile uint32_t maxPosition = 20000;
-bool initialHomeZ = false;
+INA219_t ina219;
 Stepper_t stepperZ;
-double get_var_sensor();
+
+bool running = false;
+bool calibrated = false;
+bool direction = false; // down - used onlly under start
+bool initialHomeZ = false;
+bool start = false;
+bool positive_diff = true;
+
+double sensor = 0.01;
+double max_diff = 0.01;
+double sensor_min = 0.01;
+double sensor_max = 5.00;
+double current_diff = 0.00;
+
+int32_t loops = 0;
+uint32_t motorSpeed = 10000;
+uint32_t ZPosition = 1000;
+uint32_t maxPosition = 2000;
+
+char currentOP[200] = "Idle";
+
+void set_var_positive_diff(bool value);
+void set_var_loops(int32_t value);
+void set_var_current_diff(double value);
+void set_var_sensor_min(double value);
+void set_var_sensor_max(double value);
 void set_var_sensor(double value);
-int32_t get_var_motor_speed();
+void set_var_max_diff(double value);
+void set_var_calibrated(bool value);
+void set_var_intial_home_z(bool value);
 void set_var_motor_speed(int32_t value);
+void set_var_current_operation(const char *value);
+void set_var_current_position(int32_t value);
+
+bool get_var_positive_diff();
+int32_t get_var_loops();
+double get_var_current_diff();
+double get_var_sensor_min();
+double get_var_sensor_max();
+double get_var_sensor();
+double get_var_max_diff();
+bool get_var_calibrated();
+bool get_var_intial_home_z();
+int32_t get_var_motor_speed();
+const char *get_var_current_operation();
+int32_t get_var_current_position();
+
+void getSensorValue(uint8_t sample_number);
+
 void action_move_down(lv_event_t * e);
 void action_move_up(lv_event_t * e);
 void action_home_z(lv_event_t * e);
 void action_middle_z(lv_event_t * e);
 void action_lcd(lv_event_t * e);
-bool get_var_intial_home_z();
-void set_var_intial_home_z(bool value);
-int32_t get_var_current_position();
-void set_var_current_position(int32_t value);
-const char *get_var_current_operation();
-void set_var_current_operation(const char *value);
-char currentOP[200] = "Idle";
-uint8_t lcdStartDrawing[2] = { 0xFB, 0x00 };
-uint8_t lcd_black[2] = { 0xFF, 0xFF };
-uint8_t lcd_white[2] = { 0x0F, 0xFF };
-uint8_t readID[1] = { 0xF0 };
-uint8_t spiRX[200] = { 0x00 };
-uint8_t buffer[4096];
 
-uint8_t tx_buffer[18] = {
-    0xF1, 0x00, 0x00, 0x8C, 0x80, 0x8F, 0x97, 0xAC,
-    0xB3, 0xC5, 0xC7, 0xD0, 0xDB, 0xDE, 0xF1, 0xF7,
-    0xFF, 0xFF
-};
-
-void readInput();
-void LCD_readID();
+void FANon();
 void FANoff();
-void LCD_reset();
-void setWhite();
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -149,229 +158,163 @@ int _gettimeofday( struct timeval *tv, void *tzvp )
     return 0;  // return non-zero for error
 } // end _gettimeofday()
 
-/* Just some function that I randomly found - It is mentioning Exposuring so maybe that could be some pointer
+void getSensorValue(uint8_t sample_number){
+  uint8_t sampling_counter = 0;
+  double sensor_sampling = 0;
 
-void FUN_000194b0(int param_1)
+  while(sampling_counter<sample_number){
+    sampling_counter++;
+    sensor_sampling += INA219_ReadBusVoltage(&ina219);  
+  }
+  sensor = (sensor_sampling/sample_number)/1000 - sensor_min;
+}
 
-{
-  int iVar1;
+void find_max(){
+  sensor_max = sensor;
+}
+
+void start_action(){
+  if(start){
+    if (running == true){
+      if (currentPosition(&stepperZ)==1000){
+        direction=true;
+        loops++;
+      }
+      else if (currentPosition(&stepperZ)<=0){
+        direction=false;
+        loops++;
+      }
+
+
+      if (direction){
+        ZPosition--;
+        moveTo(&stepperZ, currentPosition(&stepperZ)-1);
+      }
+      else{
+        ZPosition++;
+        moveTo(&stepperZ, currentPosition(&stepperZ)+1);
+      }
+
+      run(&stepperZ);
+      HAL_Delay(10); // waiting for Voltage stabilisation
+      getSensorValue(200);
+      double mm_position = ZPosition;
+      double mm_sensor =  sensor*2.195*100;
+      double tmp_diff = mm_sensor - mm_position;
+      // Calculate the absolute difference
+      if(tmp_diff>0){
+        positive_diff = true;
+      }
+      else{
+        positive_diff = false;
+      }
+      double abs_diff = fabs(tmp_diff)/100;
+      current_diff = abs_diff;
+        // Update max_diff if the absolute difference is greater
+        if(ZPosition<980){
+        if (abs_diff > max_diff) {
+            max_diff = abs_diff;
+        } 
+    }
+    }
+  }
+  else{
+    getSensorValue(20);
+  }
+}
+
+void action_lcd(lv_event_t * e){
+}
+
+void action_start(lv_event_t *e) {
+  start=true;
+  running = true;
+}
+bool get_var_running() {
+    return running;
+}
+
+void set_var_running(bool value) {
+    running = value;
+}
+
+void action_stop(lv_event_t *e) {
+    // TODO: Implement action stop here
+    // Home again and find starting position
+    running = false;
+    start = false;
+    loops = 0;
+    //calibrate();
+    //sensor = 0.01;
+    //max_diff = 0.01;
+    stop(&stepperZ);
+    //running = false;
+}
+
+void action_clear(lv_event_t *e) {
+    // TODO: Implement action clear here
+  initialHomeZ = false;
+  ZPosition = 10000;
+  calibrated=false;
+}
+
+void calibrate(){
+  moveTo(&stepperZ, -20000);
+  while (HAL_GPIO_ReadPin(HOME_SW_GPIO_Port,HOME_SW_Pin)){
+    //getSensorValue(10);
+    run(&stepperZ); 
+  }
+  // Now we are home, we now need to move up until sensor value changes
+  getSensorValue(10);  
+  double tmp_sensor = sensor;
+
+  while (tmp_sensor == sensor){
+    getSensorValue(200);
+    moveTo(&stepperZ, currentPosition(&stepperZ)+1);
+    run(&stepperZ); 
+  }
+  sensor_min = sensor;
+  // Now move one step back
+  moveTo(&stepperZ, currentPosition(&stepperZ)-1);
+  run(&stepperZ);
+
+  // This should be sensor starting point - set Home and Calibrated
+  setCurrentPosition(&stepperZ,0);
+  initialHomeZ = true;
+  ZPosition = 0;
+  calibrated=true;
+  max_diff = 0.01;
+  loops = 0;
+  getSensorValue(200);
+    // TODO: Implement action start here
+  //Step by step go to 5V
   
-  FUN_00018eb0(0xd,0,0xfe,0x100,0x18);
-  if (param_1 == 1) {
-    iVar1 = DAT_00019520;
-    if (*(char *)(iVar1 + 0x14) == '\0') {
-      FUN_0000b834(0x38,0x101,&DAT_00019524,0xffe0);
-    }
-    else {
-      FUN_0000b734(0x24,0xfe,s_Exposuring_00019534,0xffe0);
-    }
+  // Move sensor to 10000 mm (MAX sensor) or 5V
+  ZPosition = currentPosition(&stepperZ);
+  moveTo(&stepperZ, 1000);
+  //runToNewPosition(&stepperZ,ZPosition);
+  while (currentPosition(&stepperZ)<1000){
+    run(&stepperZ);
+    //getSensorValue(10);
   }
-  else {
-    FUN_00018e80(0xd);
-    iVar1 = DAT_00019520;
-    if (*(char *)(iVar1 + 0x14) == '\0') {
-      FUN_0000b834(0x51,0x101,&DAT_00019540,0xffe0);
-    }
-    else {
-      FUN_0000b734(0x56,0xfe,&DAT_0001954c,0xffe0);
-    }
-  }
-  return;
+  run(&stepperZ);
+  getSensorValue(100);
+  // Find maximum
+  find_max();
 }
 
-
-*/
-
-
-void setBlack(){
-
-  // Sending two bytes 0xFB 0x00
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(10);
-  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
-
-  for (int i = 0; i < 4096; i += 2) {
-      buffer[i] = 0x0F;   // Set the first byte of the pair to 0xFF
-      buffer[i + 1] = 0xFF; // Set the second byte of the pair to 0xF0
-  }
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+void action_calibrate(lv_event_t *e) {
+    // TODO: Implement action calibrate here
+  calibrate();
 }
 
-void setWhite(){
-  // Sending two bytes 0xFB 0x00
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-  HAL_Delay(10);
-  HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
-
-  for (int i = 0; i < 4096; i++) {
-      buffer[i] = 0xFF;
-  }
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,4096);
-  HAL_Delay(20);
-
-  //HAL_SPI_Transmit_DMA(&hspi3, buffer,3500);
-  //HAL_Delay(20);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+double get_var_max_diff() {
+    return max_diff;
 }
 
-void setWhiteBlackWhite(){
-
-// Does not work!!!
-
-// Sending two bytes 0xFB 0x00
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-HAL_Delay(10);
-HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-HAL_Delay(1000);
-
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-HAL_Delay(10);
-HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
-
-  for (int i = 0; i < 3600; i += 2) {
-      buffer[i] = 0x0F;   
-      buffer[i + 1] = 0xFF; 
-  }
-
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
-
-  for (int i = 0; i < 3500; i++) {
-      buffer[i] = 0xFF;
-  }
-
-
-  HAL_Delay(20);
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
-
-  for (int i = 0; i < 3600; i += 2) {
-      buffer[i] = 0x0F;   
-      buffer[i + 1] = 0xFF; 
-  }
-
-  HAL_Delay(20);
-
-  HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
-
-  HAL_Delay(20);
-  HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
+void set_var_max_diff(double value) {
+    max_diff = value;
 }
-
-void LCD_init(){
-
-// Important INIT part! Before sending FB
-
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-HAL_Delay(10);
-HAL_SPI_Transmit(&hspi3, tx_buffer, 18, 50);
-HAL_Delay(10);
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-// Waiting a bit
-HAL_Delay(200);
-
-
-
-// Sending two bytes 0xFB 0x00
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-HAL_Delay(1);
-HAL_SPI_Transmit(&hspi3, lcdStartDrawing, 2, 50);
-
-// Do not kow what this does or is it needed - but that is how data looks on logic analyser
-// It may be used to tell FPGA how much buffer we want to fill?
-
-buffer[0]  = 0xFB;
-buffer[1]  = 0x40;
-buffer[2]  = 0xFB;
-buffer[3]  = 0x40;
-buffer[4]  = 0xFB;
-
-// Also taken from init sequence
-
-for (int i=5;i<2700;i++){
-buffer[i] = 0xf5;
-}
-for (int i=6;i<2700;i+=2){
-buffer[i] = 0xa0;
-}
-for (int i=7;i<2700;i+=3){
-buffer[i] = 0x0b;
-}
-for (int i=8;i<2700;i+=4){
-buffer[i] = 0x40;
-}
-for (int i=9;i<2700;i+=5){
-buffer[i] = 0xf5;
-}
-for (int i=10;i<2700;i+=6){
-buffer[i] = 0xa0;
-}
-
-HAL_SPI_Transmit_DMA(&hspi3, buffer,2700);
-
-HAL_Delay(10);
-
-for (int i=0;i<3600;i++){
-buffer[i] = 0xfb;
-}
-for (int i=1;i<3600;i+=2){
-buffer[i] = 0x40;
-}
-HAL_SPI_Transmit_DMA(&hspi3, buffer,3600);
-HAL_Delay(20);
-HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-HAL_Delay(100);
-
-// Screen now has some garbage, but works!!!
-// Set it white
-setWhite();
-
-}
-
-void LCD_readID(){
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-    HAL_Delay(10);
-    HAL_SPI_TransmitReceive(&hspi3, 0x00, spiRX, 1, 50);    
-    HAL_Delay(60);
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_RESET);
-    HAL_Delay(10);
-    HAL_SPI_Transmit(&hspi3, readID, 1, 50);
-    HAL_Delay(60);
-    HAL_SPI_Receive(&hspi3, spiRX, 4, 100);
-    HAL_GPIO_WritePin(SPI3_NSS_GPIO_Port,SPI3_NSS_Pin,GPIO_PIN_SET);
-    HAL_Delay(500);
-}
-
-void readInput(){
-  //F11, F12, F13, F14, F15
-
- // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF11_GPIO_Port,PF11_Pin));
- // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF12_GPIO_Port,PF12_Pin));
- // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF13_GPIO_Port,PF13_Pin));
- // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF14_GPIO_Port,PF14_Pin));
- // HAL_GPIO_WritePin(D1_GPIO_Port, D1_Pin, !HAL_GPIO_ReadPin(PF15_GPIO_Port,PF15_Pin));
-
-  //HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_SET);
-  //HAL_GPIO_WritePin(LCD_PB10_GPIO_Port,LCD_PB10_Pin,GPIO_PIN_RESET);
-  //HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_SET);
-  //HAL_GPIO_WritePin(LCD_PB11_GPIO_Port,LCD_PB11_Pin,GPIO_PIN_RESET);
-}
-
-void LCD_panel_half_black()
-{
-
-  }
 
 bool get_var_intial_home_z(){
   return initialHomeZ;
@@ -388,6 +331,7 @@ void set_var_current_operation(const char *value){
 }
 
 int32_t get_var_current_position(){
+  ZPosition = currentPosition(&stepperZ);
   return ZPosition;
 }
 void set_var_current_position(int32_t value){
@@ -409,6 +353,17 @@ void set_var_sensor(double value) {
 void FANoff(){
   HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
 }
+void FANon(){
+  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_SET);
+}
+
+bool get_var_calibrated() {
+    return calibrated;
+}
+
+void set_var_calibrated(bool value) {
+    calibrated = value;
+}
 
 void set_var_motor_speed(int32_t value){
   motorSpeed = value;
@@ -419,18 +374,19 @@ void set_var_motor_speed(int32_t value){
 
 void action_move_down(lv_event_t * e){
   strcpy(currentOP, "Move DOWN");
-  ZPosition = ZPosition - 1000;
-  if (ZPosition >= 200){
+  ZPosition = ZPosition - 1;
+  if (ZPosition >= 1){
     runToNewPosition(&stepperZ,ZPosition);
   }
 }
 void action_move_up(lv_event_t * e){
   strcpy(currentOP, "Move UP");
   if (ZPosition < 20000){
-    ZPosition = ZPosition + 1000;
+    ZPosition = ZPosition + 1;
     runToNewPosition(&stepperZ,ZPosition);
   }
 }
+
 void action_home_z(lv_event_t * e){
   strcpy(currentOP, "HOME Z");
 	moveTo(&stepperZ, -20000);  
@@ -442,39 +398,53 @@ void action_home_z(lv_event_t * e){
   setCurrentPosition(&stepperZ,0);
   initialHomeZ = true;
 }
+
 void action_middle_z(lv_event_t * e){
   strcpy(currentOP, "MIDDLE Z");
   ZPosition = 10000;
   runToNewPosition(&stepperZ,ZPosition);
 }
 
-void LCD_reset(){
-  HAL_GPIO_WritePin(LCD_RST_GPIO_Port,LCD_RST_Pin, GPIO_PIN_RESET);
-  HAL_Delay(100);
-  HAL_GPIO_WritePin(LCD_RST_GPIO_Port,LCD_RST_Pin, GPIO_PIN_SET);
-  // FPGA BOOT TIME?
-  HAL_Delay(3000);
+bool get_var_positive_diff() {
+    return positive_diff;
 }
 
-void action_lcd(lv_event_t * e){
-  setBlack();
-  HAL_Delay(500);
-  setWhite();
-  HAL_Delay(500);
-  setBlack();
-  HAL_Delay(500);
-  setWhite();
-  HAL_Delay(500);
-  setBlack();
-  HAL_Delay(500);
-  setWhite();
-  HAL_Delay(500);
-  setBlack();
-  HAL_Delay(500);
-  setWhite();
-  HAL_Delay(500);
+void set_var_positive_diff(bool value) {
+    positive_diff = value;
+}
 
-  //setWhiteBlackWhite();
+
+int32_t get_var_loops() {
+    return loops;
+}
+
+void set_var_loops(int32_t value) {
+    loops = value;
+}
+
+double get_var_current_diff() {
+    return current_diff;
+}
+
+void set_var_current_diff(double value) {
+    current_diff = value;
+}
+
+
+double get_var_sensor_min() {
+    return sensor_min;
+}
+
+void set_var_sensor_min(double value) {
+    sensor_min = value;
+}
+
+double get_var_sensor_max() {
+    return sensor_max;
+}
+
+void set_var_sensor_max(double value) {
+    sensor_max = value;
 }
 
 void InitFullStep(void){
@@ -505,12 +475,11 @@ void motor_init(){
   setCurrentPosition(&stepperZ,ZPosition);
 }
 
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-uint16_t color = 0;
+// uint16_t color = 0;
 /* USER CODE END 0 */
 
 /**
@@ -555,72 +524,32 @@ int main(void)
   MX_UART4_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
-  //motor_init();
+  motor_init();
   FANoff();
-  readInput();
-  LCD_reset();
-  LCD_readID();
-  LCD_init();
-  //LCD_reset();
-  //LCD_readID();
+  FANon();
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
+
+  ui_init();
 
   while(!INA219_Init(&ina219, &hi2c1, INA219_ADDRESS))
   {
 
   }
   // HAL_Delay(100);
-  #ifdef USE_EEZ_PROJECT
-  //lv_demo_benchmark();
-  ui_init();
-  //lv_demo_widgets();
-  //lv_demo_stress();
-  #else
-    for (int i= 0; i<10;i++){
-      lcd_fill_rand_colors();
-      HAL_Delay(300);
-    }
-  #endif
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-  #ifdef USE_EEZ_PROJECT
+    lv_task_handler();
+    ui_tick();
+    HAL_Delay(10);
+    start_action();
 
-  lv_task_handler();
-  ui_tick();
-  HAL_Delay(10);
-  if (sampling_counter<10){
-    sampling_counter++;
-    sensor_sampling += INA219_ReadBusVoltage(&ina219);  
-  }
- else{
-    sensor = (sensor_sampling/10)/1000;
-    sampling_counter = 0;
-    sensor_sampling = 0;
- }
- // vshunt = INA219_ReadShuntVolage(&ina219);
- // current = INA219_ReadCurrent(&ina219);
-  #else
-    ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
-    ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
-    ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
-    HAL_Delay(2000);
-    lcd_random_points();
-    ILI9341_Draw_Text ("MONO X6",10,60,RED, 6, BLACK);
-    ILI9341_Draw_Text ("RESIN",10,130,GREEN, 6,BLACK);
-    ILI9341_Draw_Text ("HACKED",10,200,BLUE, 6,BLACK);
-    lcd_random_points();
-    lcd_random_circles();
-    lcd_random_points();
-    lcd_random_rectangles();
-    lcd_random_points();
-    lcd_random_lines();
-  #endif
     /* USER CODE END WHILE */
     MX_USB_HOST_Process();
 

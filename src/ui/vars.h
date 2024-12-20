@@ -30,6 +30,22 @@ extern bool get_var_intial_home_z();
 extern void set_var_intial_home_z(bool value);
 extern double get_var_sensor();
 extern void set_var_sensor(double value);
+extern bool get_var_calibrated();
+extern void set_var_calibrated(bool value);
+extern double get_var_max_diff();
+extern void set_var_max_diff(double value);
+extern bool get_var_running();
+extern void set_var_running(bool value);
+extern bool get_var_positive_diff();
+extern void set_var_positive_diff(bool value);
+extern int32_t get_var_loops();
+extern void set_var_loops(int32_t value);
+extern double get_var_current_diff();
+extern void set_var_current_diff(double value);
+extern double get_var_sensor_min();
+extern void set_var_sensor_min(double value);
+extern double get_var_sensor_max();
+extern void set_var_sensor_max(double value);
 
 
 #ifdef __cplusplus

@@ -7,6 +7,11 @@
 extern "C" {
 #endif
 
+// Style: number_display
+lv_style_t *get_style_number_display_MAIN_DEFAULT();
+void add_style_number_display(lv_obj_t *obj);
+void remove_style_number_display(lv_obj_t *obj);
+
 
 
 #ifdef __cplusplus
