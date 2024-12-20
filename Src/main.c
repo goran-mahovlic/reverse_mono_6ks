@@ -158,106 +158,6 @@ int _gettimeofday( struct timeval *tv, void *tzvp )
     return 0;  // return non-zero for error
 } // end _gettimeofday()
 
-void getSensorValue(uint8_t sample_number){
-  uint8_t sampling_counter = 0;
-  double sensor_sampling = 0;
-
-  while(sampling_counter<sample_number){
-    sampling_counter++;
-    sensor_sampling += INA219_ReadBusVoltage(&ina219);  
-  }
-  sensor = (sensor_sampling/sample_number)/1000 - sensor_min;
-}
-
-void find_max(){
-  sensor_max = sensor;
-}
-
-void start_action(){
-  if(start){
-    if (running == true){
-      if (currentPosition(&stepperZ)==1000){
-        direction=true;
-        loops++;
-      }
-      else if (currentPosition(&stepperZ)<=0){
-        direction=false;
-        loops++;
-      }
-
-
-      if (direction){
-        ZPosition--;
-        moveTo(&stepperZ, currentPosition(&stepperZ)-1);
-      }
-      else{
-        ZPosition++;
-        moveTo(&stepperZ, currentPosition(&stepperZ)+1);
-      }
-
-      run(&stepperZ);
-      HAL_Delay(10); // waiting for Voltage stabilisation
-      getSensorValue(200);
-      double mm_position = ZPosition;
-      double mm_sensor =  sensor*2.195*100;
-      double tmp_diff = mm_sensor - mm_position;
-      // Calculate the absolute difference
-      if(tmp_diff>0){
-        positive_diff = true;
-      }
-      else{
-        positive_diff = false;
-      }
-      double abs_diff = fabs(tmp_diff)/100;
-      current_diff = abs_diff;
-        // Update max_diff if the absolute difference is greater
-        if(ZPosition<980){
-        if (abs_diff > max_diff) {
-            max_diff = abs_diff;
-        } 
-    }
-    }
-  }
-  else{
-    getSensorValue(20);
-  }
-}
-
-void action_lcd(lv_event_t * e){
-}
-
-void action_start(lv_event_t *e) {
-  start=true;
-  running = true;
-}
-bool get_var_running() {
-    return running;
-}
-
-void set_var_running(bool value) {
-    running = value;
-}
-
-void action_stop(lv_event_t *e) {
-    // TODO: Implement action stop here
-    // Home again and find starting position
-    running = false;
-    start = false;
-    loops = 0;
-    //calibrate();
-    //sensor = 0.01;
-    //max_diff = 0.01;
-    stop(&stepperZ);
-    //running = false;
-}
-
-void action_clear(lv_event_t *e) {
-    // TODO: Implement action clear here
-  initialHomeZ = false;
-  ZPosition = 10000;
-  calibrated=false;
-}
-
 void calibrate(){
   moveTo(&stepperZ, -20000);
   while (HAL_GPIO_ReadPin(HOME_SW_GPIO_Port,HOME_SW_Pin)){
@@ -288,11 +188,9 @@ void calibrate(){
   getSensorValue(200);
     // TODO: Implement action start here
   //Step by step go to 5V
-  
   // Move sensor to 10000 mm (MAX sensor) or 5V
   ZPosition = currentPosition(&stepperZ);
   moveTo(&stepperZ, 1000);
-  //runToNewPosition(&stepperZ,ZPosition);
   while (currentPosition(&stepperZ)<1000){
     run(&stepperZ);
     //getSensorValue(10);
@@ -303,9 +201,79 @@ void calibrate(){
   find_max();
 }
 
+void start_action(){
+  if(start){
+    if (running == true){
+      if (currentPosition(&stepperZ)==1000){
+        direction=true;
+        loops++;
+      }
+      else if (currentPosition(&stepperZ)<=0){
+        direction=false;
+        loops++;
+      }
+      if (direction){
+        ZPosition--;
+        moveTo(&stepperZ, currentPosition(&stepperZ)-1);
+      }
+      else{
+        ZPosition++;
+        moveTo(&stepperZ, currentPosition(&stepperZ)+1);
+      }
+      run(&stepperZ);
+      HAL_Delay(10); // waiting for Voltage stabilisation
+      getSensorValue(200);
+      double mm_position = ZPosition;
+      double mm_sensor =  sensor*2.195*100;
+      double tmp_diff = mm_sensor - mm_position;
+      // Calculate the absolute difference
+      if(tmp_diff>0){
+        positive_diff = true;
+      }
+      else{
+        positive_diff = false;
+      }
+      double abs_diff = fabs(tmp_diff)/100;
+      current_diff = abs_diff;
+        // Update max_diff if the absolute difference is greater
+        if(ZPosition<980){
+        if (abs_diff > max_diff) {
+            max_diff = abs_diff;
+        } 
+    }
+    }
+  }
+  else{
+    getSensorValue(20);
+  }
+}
+
 void action_calibrate(lv_event_t *e) {
-    // TODO: Implement action calibrate here
   calibrate();
+}
+
+void action_start(lv_event_t *e) {
+  start=true;
+  running = true;
+}
+
+void action_stop(lv_event_t *e) {
+    running = false;
+    start = false;
+    loops = 0;
+    stop(&stepperZ);
+}
+
+void find_max(){
+  sensor_max = sensor;
+}
+
+bool get_var_running() {
+    return running;
+}
+
+void set_var_running(bool value) {
+    running = value;
 }
 
 double get_var_max_diff() {
@@ -348,13 +316,6 @@ double get_var_sensor() {
 
 void set_var_sensor(double value) {
     sensor = value;
-}
-
-void FANoff(){
-  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
-}
-void FANon(){
-  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_SET);
 }
 
 bool get_var_calibrated() {
@@ -413,7 +374,6 @@ void set_var_positive_diff(bool value) {
     positive_diff = value;
 }
 
-
 int32_t get_var_loops() {
     return loops;
 }
@@ -430,7 +390,6 @@ void set_var_current_diff(double value) {
     current_diff = value;
 }
 
-
 double get_var_sensor_min() {
     return sensor_min;
 }
@@ -445,6 +404,24 @@ double get_var_sensor_max() {
 
 void set_var_sensor_max(double value) {
     sensor_max = value;
+}
+
+void getSensorValue(uint8_t sample_number){
+  uint8_t sampling_counter = 0;
+  double sensor_sampling = 0;
+
+  while(sampling_counter<sample_number){
+    sampling_counter++;
+    sensor_sampling += INA219_ReadBusVoltage(&ina219);  
+  }
+  sensor = (sensor_sampling/sample_number)/1000 - sensor_min;
+}
+
+void FANoff(){
+  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
+}
+void FANon(){
+  HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_SET);
 }
 
 void InitFullStep(void){
