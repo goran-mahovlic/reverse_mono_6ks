@@ -81,7 +81,7 @@ Stepper_t stepperZ;
 bool running = false;
 bool calibrated = false;
 bool direction = false; // down - used onlly under start
-bool initialHomeZ = false;
+bool intial_home_z = false;
 bool start = false;
 bool positive_diff = true;
 
@@ -90,13 +90,13 @@ double max_diff = 0.01;
 double sensor_min = 0.01;
 double sensor_max = 5.00;
 double current_diff = 0.00;
-
+int32_t current_position = 1000;
 int32_t loops = 0;
-int32_t motorSpeed = 10000;
+int32_t motor_speed = 10000;
 int32_t ZPosition = 1000;
-int32_t maxPosition = 2000;
 
-char currentOP[200] = "Idle";
+
+char current_operation[100] = "Idle";
 
 void set_var_positive_diff(bool value);
 void set_var_loops(int32_t value);
@@ -130,10 +130,10 @@ void action_move_down(lv_event_t * e);
 void action_move_up(lv_event_t * e);
 void action_home_z(lv_event_t * e);
 void action_middle_z(lv_event_t * e);
-void action_lcd(lv_event_t * e);
+void find_max();
 
-void FANon();
-void FANoff();
+void fan_on();
+void fan_off();
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -180,7 +180,7 @@ void calibrate(){
 
   // This should be sensor starting point - set Home and Calibrated
   setCurrentPosition(&stepperZ,0);
-  initialHomeZ = true;
+  intial_home_z = true;
   ZPosition = 0;
   calibrated=true;
   max_diff = 0.01;
@@ -284,30 +284,34 @@ void set_var_max_diff(double value) {
     max_diff = value;
 }
 
-bool get_var_intial_home_z(){
-  return initialHomeZ;
-}
-void set_var_intial_home_z(bool value){
-  initialHomeZ = value;
+bool get_var_intial_home_z() {
+    return intial_home_z;
 }
 
-const char *get_var_current_operation(){
-return currentOP;
+void set_var_intial_home_z(bool value) {
+    intial_home_z = value;
 }
-void set_var_current_operation(const char *value){
-//*currentOP = &value;
+
+const char *get_var_current_operation() {
+    return current_operation;
+}
+
+void set_var_current_operation(const char *value) {
+    strncpy(current_operation, value, sizeof(current_operation) / sizeof(char));
+    current_operation[sizeof(current_operation) / sizeof(char) - 1] = 0;
 }
 
 int32_t get_var_current_position(){
   ZPosition = currentPosition(&stepperZ);
-  return ZPosition;
+  current_position = ZPosition;
+  return current_position;
 }
 void set_var_current_position(int32_t value){
   ZPosition = value;
 }
 
 int32_t get_var_motor_speed(){
-  return motorSpeed;
+  return motor_speed;
 }
 
 double get_var_sensor() {
@@ -327,21 +331,21 @@ void set_var_calibrated(bool value) {
 }
 
 void set_var_motor_speed(int32_t value){
-  motorSpeed = value;
-	setMaxSpeed(&stepperZ, motorSpeed);
-	setSpeed(&stepperZ, motorSpeed);
-	setAcceleration(&stepperZ, motorSpeed/5);  
+  motor_speed = value;
+	setMaxSpeed(&stepperZ, motor_speed);
+	setSpeed(&stepperZ, motor_speed);
+	setAcceleration(&stepperZ, motor_speed/5);  
 }
 
 void action_move_down(lv_event_t * e){
-  strcpy(currentOP, "Move DOWN");
+  strcpy(current_operation, "Move DOWN");
   ZPosition = ZPosition - 1;
   if (ZPosition >= 1){
     runToNewPosition(&stepperZ,ZPosition);
   }
 }
 void action_move_up(lv_event_t * e){
-  strcpy(currentOP, "Move UP");
+  strcpy(current_operation, "Move UP");
   if (ZPosition < 20000){
     ZPosition = ZPosition + 1;
     runToNewPosition(&stepperZ,ZPosition);
@@ -349,7 +353,7 @@ void action_move_up(lv_event_t * e){
 }
 
 void action_home_z(lv_event_t * e){
-  strcpy(currentOP, "HOME Z");
+  strcpy(current_operation, "HOME Z");
 	moveTo(&stepperZ, -20000);  
   while (HAL_GPIO_ReadPin(HOME_SW_GPIO_Port,HOME_SW_Pin)){
     //ZPosition = -200;
@@ -357,11 +361,11 @@ void action_home_z(lv_event_t * e){
   }
   ZPosition = 0;
   setCurrentPosition(&stepperZ,0);
-  initialHomeZ = true;
+  intial_home_z = true;
 }
 
 void action_middle_z(lv_event_t * e){
-  strcpy(currentOP, "MIDDLE Z");
+  strcpy(current_operation, "MIDDLE Z");
   ZPosition = 10000;
   runToNewPosition(&stepperZ,ZPosition);
 }
@@ -417,10 +421,10 @@ void getSensorValue(uint8_t sample_number){
   sensor = (sensor_sampling/sample_number)/1000 - sensor_min;
 }
 
-void FANoff(){
+void fan_off(){
   HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_RESET);
 }
-void FANon(){
+void fan_on(){
   HAL_GPIO_WritePin(FAN_GPIO_Port,FAN_Pin, GPIO_PIN_SET);
 }
 
@@ -444,9 +448,9 @@ void motor_init(){
   InitSmartTuneDynamicDecay();
 	/*##-3- Initialize X axis stepper. ###*/
   InitStepper(&stepperZ, DRIVER, MOTOR_STEP_Pin, MOTOR_STEP_GPIO_Port, MOTOR_DIR_Pin, MOTOR_DIR_GPIO_Port,1);
-	setMaxSpeed(&stepperZ, motorSpeed);
-	setSpeed(&stepperZ, motorSpeed);
-	setAcceleration(&stepperZ, motorSpeed);
+	setMaxSpeed(&stepperZ, motor_speed);
+	setSpeed(&stepperZ, motor_speed);
+	setAcceleration(&stepperZ, motor_speed);
   setEnablePin(&stepperZ, MOTOR_ENABLE_Pin, MOTOR_ENABLE_GPIO_Port);
 	enableOutputs(&stepperZ);
   setCurrentPosition(&stepperZ,ZPosition);
@@ -502,8 +506,8 @@ int main(void)
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
   motor_init();
-  FANoff();
-  FANon();
+  fan_on();
+  fan_off();
   lv_init();
   ILI9341_Init();
   lv_touchpad_init();
