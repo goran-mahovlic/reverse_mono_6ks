@@ -92,9 +92,9 @@ double sensor_max = 5.00;
 double current_diff = 0.00;
 
 int32_t loops = 0;
-uint32_t motorSpeed = 10000;
-uint32_t ZPosition = 1000;
-uint32_t maxPosition = 2000;
+int32_t motorSpeed = 10000;
+int32_t ZPosition = 1000;
+int32_t maxPosition = 2000;
 
 char currentOP[200] = "Idle";
 
